@@ -3,7 +3,8 @@
 namespace app\controller;
 
 use app\BaseController;
-
+use think\annotation\route\Get;
+use think\annotation\route\Middleware;
 class Index extends BaseController
 {
     public function index()
@@ -14,5 +15,11 @@ class Index extends BaseController
     public function hello($name = 'ThinkPHP8')
     {
         return 'hello,' . $name;
+    }
+
+    #[Get('/ne/world')]
+    #[Middleware('auth')]
+    public function world(){
+        return  success(200,'成功',['name'=>'thinkphp']);
     }
 }
