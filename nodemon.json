@@ -1,0 +1,9 @@
+{
+	"ignore": [
+		"dist/*",
+		".git"
+	],
+	"watch": [
+		"src"
+	]
+}

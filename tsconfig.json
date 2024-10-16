@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "module": "CommonJS",
+    "target": "esnext",
+    "declaration": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "inlineSourceMap": true,
+    "outDir": "dist",
+    "moduleResolution": "Node",
+    "strict": true,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "downlevelIteration": true,
+    "jsx": "preserve",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["module-alias"],
+    "exactOptionalPropertyTypes": true,
+    "strictNullChecks": true,
+    "composite": true
+  },
+
+  "include": [
+    // 需要编译的的文件和目录
+    "src/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
