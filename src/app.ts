@@ -17,6 +17,7 @@ import bodyParser from 'koa-bodyparser';
 import serve from 'koa-static';
 import {WHITE_LIST} from './config';
 import {accessLogger, applicationLogger} from './utils/log';
+import {db} from './db';
 
 // body parser
 app.use(
@@ -54,8 +55,12 @@ app.use(router.routes()).use(router.allowedMethods());
 // error-handling
 app.on('error', (err: Error, ctx: Koa.Context) => {
   applicationLogger.error(err.message);
-  ctx.send(err.message, 500);
   console.error('server error', err, ctx);
+  ctx.body = {
+    code: 500,
+    msg: err.message,
+    data: null,
+  };
 });
-
+db();
 export default app;

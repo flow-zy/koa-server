@@ -1,4 +1,5 @@
 import {
+  AllowNull,
   AutoIncrement,
   Column,
   Comment,
@@ -11,31 +12,30 @@ import {
   Unique,
 } from 'sequelize-typescript';
 
-@Table
+@Table({tableName: 'user'})
 export default class User extends Model {
-  @NotNull
   @PrimaryKey
-  @Column(DataType.NUMBER)
   @AutoIncrement
   @Comment('id')
+  @Column(DataType.BIGINT)
   declare id: number; // id
 
   // 用户名
-  @NotNull
+  @AllowNull(false)
   @Unique
-  @Column(DataType.STRING)
   @Comment('用户名')
+  @Column(DataType.STRING)
   declare username: string;
 
   // 密码
-  @NotNull
-  @Column(DataType.STRING)
+  @AllowNull(false)
   @Comment('密码')
+  @Column(DataType.STRING)
   declare password: string;
 
   //邮箱
-  @Column(DataType.STRING)
   @Comment('邮箱')
+  @Column(DataType.STRING)
   declare email: string;
 
   // 昵称
@@ -44,30 +44,30 @@ export default class User extends Model {
   declare nickname: string;
 
   // 手机号
-  @Column(DataType.STRING)
   @Comment('手机号')
+  @Column(DataType.STRING)
   declare phone: string;
 
   // 头像
-  @Column(DataType.STRING)
   @Comment('头像')
+  @Column(DataType.STRING)
   declare avatar: string;
 
   // 性别
   @Default(0)
-  @Column(DataType.NUMBER)
   @Comment('用户性别 0: 未知, 1: 男 2: 女')
+  @Column(DataType.INTEGER)
   declare gender: number;
 
   // 状态
-  @Column(DataType.NUMBER)
   @Comment('用户状态 0:注销1:正常')
   @Default(0)
+  @Column(DataType.INTEGER)
   declare status: number;
 
   // 排序
-  @Column(DataType.NUMBER)
   @Comment('用户排序')
   @Default(1)
+  @Column(DataType.INTEGER)
   declare sort: number;
 }

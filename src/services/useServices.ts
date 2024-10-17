@@ -1,5 +1,5 @@
-import userModel from '@/model/userModel';
-import {encrypt} from '@/utils/auth';
+import userModel from '../model/userModel';
+import {encrypt} from '../utils/auth';
 
 export const useLogin = () => {};
 
