@@ -12,10 +12,9 @@ const config = {
 };
 
 export default config;
-export const swaggerDoc = {
-  info: {
-    title: 'My API',
-    description: 'Description',
-  },
-  host: `localhost:${process.env.SERVER_PORT}`,
-};
+export const WHITE_LIST = [
+  /^\/public/,
+  /\/login/,
+  /^\/apidocs/,
+  /^\/swagger-json/,
+];

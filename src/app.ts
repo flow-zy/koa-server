@@ -1,6 +1,11 @@
 import Koa from 'koa';
 import router from './router';
-import swaggerAutogen from 'swagger-autogen';
+import jwt from 'koa-jwt';
+import compose from 'koa-compose';
+import authMiddleware from './middleware/authMiddleware';
+import sendMiddleware from './middleware/sendMiddleware';
+import logger from 'koa-logger';
+import cors from '@koa/cors';
 // 添加导入
 import 'module-alias/register';
 const app: Koa = new Koa();
@@ -10,6 +15,8 @@ const debug = Debug('http');
 
 import bodyParser from 'koa-bodyparser';
 import serve from 'koa-static';
+import {WHITE_LIST} from './config';
+import {accessLogger, applicationLogger} from './utils/log';
 
 // body parser
 app.use(
@@ -28,10 +35,26 @@ app.use(async (ctx: Koa.Context, next: Function) => {
   const ms = now - start;
   debug(`${ctx.method} ${ctx.url} - ${ms}ms`);
 });
-
-// app.use(router.routes()).use(router.allowedMethods());
+const jwtMiddleware = jwt({secret: process.env.SCREET_KEY!}).unless({
+  path: WHITE_LIST,
+});
+app.use(async (ctx, next) => {
+  accessLogger();
+  return next();
+});
+const middlewares = compose([
+  logger(),
+  cors(),
+  jwtMiddleware,
+  sendMiddleware(),
+  authMiddleware(),
+]);
+app.use(middlewares);
+app.use(router.routes()).use(router.allowedMethods());
 // error-handling
 app.on('error', (err: Error, ctx: Koa.Context) => {
+  applicationLogger.error(err.message);
+  ctx.send(err.message, 500);
   console.error('server error', err, ctx);
 });
 
