@@ -6,7 +6,6 @@ import {
   DataType,
   Default,
   Model,
-  NotNull,
   PrimaryKey,
   Table,
   Unique,

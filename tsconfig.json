@@ -19,9 +19,6 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "baseUrl": "./",
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "types": ["module-alias", "ts-node"],
     "exactOptionalPropertyTypes": true,
     "strictNullChecks": true,

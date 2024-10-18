@@ -9,7 +9,7 @@ import app from '../app';
 import Debug from 'debug';
 import http from 'http';
 const debug = Debug('http');
-import config from '@/config'
+import config from '../config';
 /**
  * Get port from environment and store in Express.
  */
