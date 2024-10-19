@@ -1,6 +1,7 @@
 import {
   AllowNull,
   AutoIncrement,
+  BelongsToMany,
   Column,
   Comment,
   DataType,
@@ -9,6 +10,7 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import User from './userModel';
 
 // 菜单模型
 @Table({tableName: 'menu'})

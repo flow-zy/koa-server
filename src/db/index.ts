@@ -37,26 +37,28 @@ export const db = async () => {
   try {
     await sequelize.authenticate();
     await sequelize.sync();
-
-    // const initRole = [
-    //   {
-    //     name: '超级管理员',
-    //     nickname: 'super',
-    //     description: '最高权限',
-    //   },
-    //   {
-    //     name: '管理员',
-    //     nickname: 'admin',
-    //     description: '普通管理员',
-    //   },
-    //   {
-    //     name: '普通用户',
-    //     nickname: 'user',
-    //     description: '普通用户',
-    //   },
-    // ];
     // {force: true}
-    // await RoleModel.bulkCreate(initRole, {ignoreDuplicates: true});
+    const initRole = [
+      {
+        name: '超级管理员',
+        nickname: 'super',
+        description: '最高权限',
+      },
+      {
+        name: '管理员',
+        nickname: 'admin',
+        description: '普通管理员',
+      },
+      {
+        name: '普通用户',
+        nickname: 'user',
+        description: '普通用户',
+      },
+    ];
+    {
+      force: true;
+    }
+    await RoleModel.bulkCreate(initRole, {ignoreDuplicates: true});
 
     console.log('Connection has been established successfully.');
   } catch (error) {

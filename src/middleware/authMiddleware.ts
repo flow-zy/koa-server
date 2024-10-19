@@ -3,7 +3,7 @@ import {verifyToken} from '../utils/auth';
 import {Context, Next} from 'koa';
 export default () => {
   return async (ctx: Context, next: Next) => {
-    const token = ctx.request.headers.authorization;
+    const token = ctx.request.headers.authorization?.replace('Bearer ', '');
     const isWhite = WHITE_LIST.some((item) => RegExp(item).test(ctx.url));
     if (isWhite) return await next();
     if (!token) {

@@ -1,14 +1,11 @@
-export function paginate(
-  data: any = [],
-  currentPage: number = 1,
-  pageSize: number = 10,
-  total: number = 0,
-) {
-  return {
-    data,
-    currentPage,
-    pageSize,
-    total,
-    totalPage: Math.ceil(total / pageSize),
-  };
-}
+// 通过传过来的pageSize和pageNum计算出limit和offset
+export const getLimitAndOffset = (pageSize: number, pageNum: number) => {
+  const limit = pageSize || 10;
+  const offset = pageNum ? (pageNum - 1) * limit : 0;
+  return {limit, offset};
+};
+// 判断对象中是否有值为空
+export const emptyObject = (obj: any) => {
+  if (!(obj instanceof Object)) return false;
+  return Object.keys(obj).length > 0;
+};

@@ -1,6 +1,5 @@
 import {
   AutoIncrement,
-  BelongsTo,
   Column,
   Comment,
   DataType,
@@ -11,10 +10,11 @@ import {
 } from 'sequelize-typescript';
 import RoleModel from './roleModel';
 import PermissionModel from './permissionModel';
+import MenuModel from './menuModel';
 
 // 角色权限模型
-@Table({tableName: 'role_permission'})
-export default class RolePermissionModel extends Model {
+@Table({tableName: 'role_menu'})
+export default class RoleMenuModel extends Model {
   @AutoIncrement
   @PrimaryKey
   @Comment('id')
@@ -26,8 +26,8 @@ export default class RolePermissionModel extends Model {
   @Column(DataType.BIGINT)
   declare role_id: number;
 
-  @Comment('权限id')
-  @ForeignKey(() => PermissionModel)
+  @Comment('菜单id')
+  @ForeignKey(() => MenuModel)
   @Column(DataType.BIGINT)
-  declare permission_id: number;
+  declare menu_id: number;
 }

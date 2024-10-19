@@ -7,7 +7,9 @@ const options = {
   padding: CryptoJS.pad.Pkcs7, // 加密模式，默认为 ECB
 };
 export const createToken = (user: any) => {
-  return sign({...user}, process.env.SCREET_KEY as string, {expiresIn: '3h'});
+  return sign(user, process.env.SCREET_KEY as string, {
+    expiresIn: '3h',
+  });
 };
 export const verifyToken = (token: string) => {
   return verify(token, process.env.SCREET_KEY as string);

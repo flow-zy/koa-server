@@ -7,7 +7,12 @@ import {
   Column,
   DataType,
   Default,
+  BelongsToMany,
 } from 'sequelize-typescript';
+import User from './userModel';
+import RoleUserModel from './roleUserModel';
+import PermissionModel from './permissionModel';
+import RolePermissionModel from './rolePermissionModel';
 
 @Table({tableName: 'role'})
 export default class RoleModel extends Model {
@@ -37,4 +42,10 @@ export default class RoleModel extends Model {
   @Default(1)
   @Column(DataType.INTEGER)
   declare sort: number;
+
+  @BelongsToMany(() => User, () => RoleUserModel)
+  declare users: User[];
+
+  @BelongsToMany(() => PermissionModel, () => RolePermissionModel)
+  declare permissions: PermissionModel[];
 }

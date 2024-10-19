@@ -5,6 +5,7 @@ import {
   Column,
   Comment,
   DataType,
+  ForeignKey,
   Model,
   NotNull,
   PrimaryKey,
@@ -23,16 +24,12 @@ export default class RoleUserModel extends Model {
   declare id: number;
 
   @Comment('角色id')
+  @ForeignKey(() => RoleModel)
   @Column(DataType.BIGINT)
   declare role_id: number;
 
-  @BelongsTo(() => RoleModel, {foreignKey: 'role_id'})
-  declare role: RoleModel;
-
   @Comment('用户id')
+  @ForeignKey(() => User)
   @Column(DataType.BIGINT)
   declare user_id: number;
-
-  @BelongsTo(() => User, {foreignKey: 'user_id'})
-  declare user: User;
 }

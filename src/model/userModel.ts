@@ -1,15 +1,19 @@
 import {
   AllowNull,
   AutoIncrement,
+  BelongsToMany,
   Column,
   Comment,
   DataType,
   Default,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
   Unique,
 } from 'sequelize-typescript';
+import RoleModel from './roleModel';
+import RoleUserModel from './roleUserModel';
 
 @Table({tableName: 'user'})
 export default class User extends Model {
@@ -60,7 +64,7 @@ export default class User extends Model {
 
   // 状态
   @Comment('用户状态 0:注销1:正常')
-  @Default(0)
+  @Default(1)
   @Column(DataType.INTEGER)
   declare status: number;
 
@@ -69,4 +73,7 @@ export default class User extends Model {
   @Default(1)
   @Column(DataType.INTEGER)
   declare sort: number;
+
+  @BelongsToMany(() => RoleModel, () => RoleUserModel)
+  declare roles: RoleModel;
 }

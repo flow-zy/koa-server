@@ -55,12 +55,12 @@ app.use(router.routes()).use(router.allowedMethods());
 // error-handling
 app.on('error', (err: Error, ctx: Koa.Context) => {
   applicationLogger.error(err.message);
-  console.error('server error', err, ctx);
-  ctx.body = {
+  console.error('server error', err);
+  return (ctx.body = {
     code: 500,
     msg: err.message,
     data: null,
-  };
+  });
 });
 db();
 export default app;
