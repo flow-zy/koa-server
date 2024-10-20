@@ -29,7 +29,6 @@ export default class UserController {
 				userinfo
 			});
 		} catch (error) {
-			console.log(error);
 			return ctx.send('服务器请求失败', 500);
 		}
 	}
@@ -127,11 +126,34 @@ export default class UserController {
 		email: { type: 'string', required: false, description: '邮箱' },
 		phone: { type: 'string', required: false, description: '手机号' },
 		gender: { type: 'number', required: false, description: '性别' },
-		avatar: { type: 'string', required: false, description: '头像' }
+		avatar: { type: 'string', required: false, description: '头像' },
+		roles: { type: 'array<number>', required: false, description: '角色' }
 	})
 	static async updUserInfo(ctx: Context) {
-		const params = ctx.request.body as UserModel;
-		const id = ctx.request.search;
-		console.log(ctx);
+		const params = ctx.request.body as UserModel & { roles: number[] };
+		const id = ctx.params.id;
+		try {
+			const res = await userService.updUserInfo(params, id);
+			if (!res) return ctx.send('修改用户信息成功', 200);
+			return ctx.send('修改用户信息失败', 201);
+		} catch (error) {
+			return ctx.send('服务器请求失败', 500);
+		}
+	}
+	// 批量删除用户
+	@request('delete', '/user/batch/delete')
+	@tags(['批量删除用户'])
+	@query({
+		ids: { type: 'array<number>', required: true, description: '用户id' }
+	})
+	static async batchDelete(ctx: Context) {
+		const params = ctx.request.query as unknown as {
+			ids: number[];
+		};
+		try {
+			const res = await userService.batchDelete(params.ids);
+		} catch (error) {
+			return ctx.send('服务器请求失败', 500);
+		}
 	}
 }
