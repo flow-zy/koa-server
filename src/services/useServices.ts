@@ -141,19 +141,40 @@ class UserService {
 	};
 	// 批量删除
 	batchDelete = async (ids: number[]) => {
+		let res = 0;
 		ids.forEach(async (id) => {
-			await User.destroy({
+			res = await User.destroy({
 				where: {
 					id
 				}
 			});
-			await RoleUserModel.destroy({
+			res = await RoleUserModel.destroy({
 				where: {
 					user_id: id
 				}
 			});
 		});
-		return;
+		return res;
+	};
+	// 给用户添加角色
+	updUserRole = async (id: number, roles: RoleModel['id'][]) => {
+		const options = roles.map((roleId) => ({
+			user_id: id,
+			role_id: roleId
+		}));
+		return await RoleUserModel.bulkCreate(options);
+	};
+	// 修改密码
+	updPassword = async (params: { id: number; password: string }) => {
+		params.password = encrypt(params.password);
+		return await userModel.update(
+			{ password: params.password },
+			{ where: { id: params.id } }
+		);
+	};
+	// 修改用户头像
+	updAvatar = async (id: number, avatar: string) => {
+		return await userModel.update({ avatar }, { where: { id } });
 	};
 }
 export default new UserService();

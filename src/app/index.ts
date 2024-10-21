@@ -5,11 +5,13 @@ import { koaBody } from 'koa-body';
 import cors from 'koa2-cors'; // 跨域处理
 // import parameter from 'koa-parameter';
 // import koaStatic from 'koa-static';
+import jwt from 'koa-jwt';
 import errHandler from './errHandler';
 import router from '../router/index';
 import { corsHandler } from '../middleware/cors';
 import Result from '../utils/Result';
 import { deleteStatic, staticInit } from '../utils/Schedule';
+import processEnv, { white_list } from '../config/config.default';
 // import sequelize from '../db/index';
 // @ts-ignore
 import parameter from 'koa-parameter';
@@ -53,7 +55,7 @@ app.use(
 	koaBody({
 		multipart: true,
 		formidable: {
-			uploadDir: path.resolve(__dirname, '../static'),
+			uploadDir: path.resolve(__dirname, '../static/uploads'),
 			keepExtensions: true
 		}
 	})
@@ -61,6 +63,13 @@ app.use(
 // 可以通过路径访问静态资源
 app.use(koaStatic(path.resolve(__dirname, '../static')));
 app.use(send());
+app.use(
+	jwt({
+		secret: processEnv.JWT_SECRET!
+	}).unless({
+		path: white_list
+	})
+);
 // app.use(parameter(app))
 parameter(app);
 

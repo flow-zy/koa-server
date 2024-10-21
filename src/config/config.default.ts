@@ -6,3 +6,4 @@ dotenv.config();
 // module.exports = process.env;
 
 export default process.env;
+export const white_list = [/^\/static/, /^\/login/, /^\/register/, /^\/upload/];
