@@ -15,7 +15,7 @@
 - 登录鉴权：Jsonwebtoken
 - 服务启动：Nodemon
 
-### :airplane:  快速开始​
+### :airplane:  快速开始
 
 ```shell
 npm install

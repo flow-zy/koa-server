@@ -8,45 +8,46 @@ import {
   Model,
   PrimaryKey,
   Table,
-} from 'sequelize-typescript';
-import RoleModel from './roleModel';
-import RolePermissionModel from './rolePermissionModel';
+} from 'sequelize-typescript'
+
+import RoleModel from './roleModel'
+import RolePermissionModel from './rolePermissionModel'
 
 // 权限模型
-@Table({tableName: 'permission'})
+@Table({ tableName: 'permission' })
 export default class PermissionModel extends Model {
   @PrimaryKey
   @AutoIncrement
   @Comment('id')
   @Column(DataType.BIGINT)
-  declare id: number;
+  declare id: number
 
   @Comment('权限名称')
   @Column(DataType.STRING(255))
-  declare name: string;
+  declare name: string
 
   @Comment('权限标识')
   @Column(DataType.STRING(255))
-  declare code: string;
+  declare code: string
 
   @Comment('权限类型')
   @Column(DataType.INTEGER)
-  declare type: number;
+  declare type: number
 
   @Comment('排序')
   @Default(1)
   @Column(DataType.INTEGER)
-  declare sort: number;
+  declare sort: number
 
   @Comment('状态')
   @Default(1)
   @Column(DataType.INTEGER)
-  declare status: number;
+  declare status: number
 
   @Comment('权限描述')
   @Column(DataType.STRING)
-  declare description: string;
+  declare description: string
 
   @BelongsToMany(() => RoleModel, () => RolePermissionModel)
-  declare roles: [];
+  declare roles: []
 }

@@ -1,15 +1,17 @@
-import * as logger from 'log4js';
-import path from 'path';
+import path from 'node:path'
+
+import * as logger from 'log4js'
+
 logger.configure({
   appenders: {
     access: {
       type: 'dateFile',
-      pattern: '-yyyy-MM-dd.log', //生成文件的规则
+      pattern: '-yyyy-MM-dd.log', // 生成文件的规则
       filename: path.resolve('logs', 'access.log'),
     },
     application: {
       type: 'dateFile',
-      pattern: '-yyyy-MM-dd.log', //生成文件的规则
+      pattern: '-yyyy-MM-dd.log', // 生成文件的规则
       filename: path.resolve('logs', 'application.log'),
     },
     out: {
@@ -17,12 +19,12 @@ logger.configure({
     },
     db: {
       type: 'dateFile',
-      pattern: '-yyyy-MM-dd.log', //生成文件的规则
+      pattern: '-yyyy-MM-dd.log', // 生成文件的规则
       filename: path.resolve('logs', 'db.log'),
     },
   },
   categories: {
-    default: {appenders: ['out'], level: 'info'},
+    default: { appenders: ['out'], level: 'info' },
     access: {
       appenders: ['access'],
       level: 'info',
@@ -36,7 +38,7 @@ logger.configure({
       level: 'info',
     },
   },
-});
-export const accessLogger = () => logger.getLogger('access');
-export const applicationLogger = logger.getLogger('application');
-export const dbLogger = logger.getLogger('db');
+})
+export const accessLogger = () => logger.getLogger('access')
+export const applicationLogger = logger.getLogger('application')
+export const dbLogger = logger.getLogger('db')
