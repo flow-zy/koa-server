@@ -1,19 +1,20 @@
 {
-  "compilerOptions": {
-    "target": "es6",
-    "useDefineForClassFields": true,
-    "emitDecoratorMetadata": true, // 目标js版本
-    "experimentalDecorators": true,
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "strict": true,
-    "strictPropertyInitialization": false,
-    "outDir": "./dist",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*", "src/**/*.ts", "src/**/*.js"],
-  "exclude": ["node_modules", "dist", "public"],
-  "ts-node": { "esm": true }
+	"compilerOptions": {
+		"target": "es6",
+		"useDefineForClassFields": true,
+		"emitDecoratorMetadata": true, // 目标js版本
+		"experimentalDecorators": true,
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"strict": true,
+		"strictPropertyInitialization": false,
+		"outDir": "./dist",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"alwaysStrict": false
+	},
+	"include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js"],
+	"exclude": ["node_modules", "dist", "public"],
+	"ts-node": { "esm": true }
 }

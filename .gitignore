@@ -3,3 +3,4 @@ dist
 test
 src/static
 node_modules
+logs

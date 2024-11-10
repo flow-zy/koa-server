@@ -8,13 +8,10 @@ export default class UploadController {
     const file = ctx.request.files.file // file 是前端表单中文件输入的名称
     if (file) {
       // 处理文件，例如保存到服务器等
-      return ctx.send('上传成功', 200, {
-        url: `/uploads/${file.newFilename}`,
-      })
+      return ctx.success(`/uploads/${file.newFilename}`, '上传成功')
     }
     else {
-      ctx.status = 400
-      ctx.body = { message: '没有文件被上传', code: 201 }
+      return ctx.error('没有文件被上传')
     }
   }
 }

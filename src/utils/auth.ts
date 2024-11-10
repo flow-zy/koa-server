@@ -30,3 +30,11 @@ export function decrypt(str: string) {
   const bytes = CryptoJS.AES.decrypt(str, SECRETKEY, options)
   return JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
 }
+
+// 剔除对象中为_t的属性
+export function filterObject(obj: any) {
+  return Object.keys(obj).reduce((acc, key) => {
+    if (key !== '_t') acc[key] = obj[key]
+    return acc
+  }, {} as any)
+}

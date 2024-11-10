@@ -1,6 +1,6 @@
 // 通过传过来的pageSize和pageNum计算出limit和offset
 export function getLimitAndOffset(pageSize: number, pageNum: number) {
-  const limit = pageSize || 10
+  const limit = pageSize*1 || 10
   const offset = pageNum ? (pageNum - 1) * limit : 0
   return { limit, offset }
 }

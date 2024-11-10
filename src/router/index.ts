@@ -8,5 +8,5 @@ router.swagger({
   description: 'api 文档',
   swaggerHtmlEndpoint: '/apidocs',
 })
-router.mapDir(path.resolve(__dirname, '../controller'))
+router.mapDir(path.resolve(__dirname, '../controllers'))
 export default router
