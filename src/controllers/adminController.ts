@@ -5,7 +5,7 @@ import { AuthMessage } from '../enums/auth'
 import userService from '../services/authService'
 import { generateToken, defaultOptions } from '../middleware/auth'
 import { logger } from '../config/log4js'
-import { userInfo } from 'os'
+import { UserMessage } from '../enums'
 // 登录参数验证
 interface LoginParams {
 	username: string
@@ -20,7 +20,7 @@ interface RegisterParams {
 	email?: string
 	phone?: string
 	nickname?: string
-	roles: string[]
+	roles: number[]
 }
 
 export default class AdminController {
@@ -88,7 +88,6 @@ export default class AdminController {
 				ip: ctx.ip,
 				userAgent: ctx.get('user-agent')
 			})
-
 			return ctx.success(result, AuthMessage.LOGIN_SUCCESS)
 		} catch (err) {
 			const error = err as any
@@ -192,7 +191,7 @@ export default class AdminController {
 		} catch (err) {
 			const error = err as any
 			// 记录失败日志
-			logger.warn('管理员注册失败', {
+			logger.error('管理员注册失败', {
 				username: params.username,
 				ip: ctx.ip,
 				error: error.message
@@ -231,6 +230,21 @@ export default class AdminController {
 				error: error.message
 			})
 			throw error
+		}
+	}
+
+	@request('get', '/logout')
+	@tags(['管理员'])
+	@summary('退出登录')
+	static async logout(ctx: Context) {
+		try {
+			const token = ctx.headers.authorization?.split(' ')[1]
+			if (token) {
+				// 将token加入黑名单
+			}
+			ctx.success(null, UserMessage.LOGOUT_SUCCESS)
+		} catch (error) {
+			ctx.error(UserMessage.LOGOUT_ERROR)
 		}
 	}
 }

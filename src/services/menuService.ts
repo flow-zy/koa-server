@@ -20,6 +20,8 @@ class MenuService {
 			if (menu.parentid === parentId) {
 				const node: MenuTree = menu.toJSON()
 				const children = this.buildMenuTree(menus, menu.id)
+				// @ts-ignore
+				node.created_at = DateUtil.formatDateTime(node.created_at)
 				if (children.length) {
 					node.children = children
 				}
@@ -236,6 +238,13 @@ class MenuService {
 			{ where: { id } }
 		)
 		return result[0] > 0
+	}
+	// 判断有没有子级
+	hasChildren = async (id: number) => {
+		const hasChildren = await MenuModel.findOne({
+			where: { parentid: id, status: 1 }
+		})
+		return hasChildren
 	}
 }
 

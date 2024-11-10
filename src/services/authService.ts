@@ -13,11 +13,10 @@ class AuthService {
 	}
 
 	async userLogin(username: string) {
-		return User.findOne({
+		const user = await User.findOne({
 			where: { username },
 			attributes: {
-				exclude: ['password', 'deleted_at'],
-
+				exclude: ['password', 'deleted_at']
 			},
 			raw: true,
 			include: {
@@ -26,6 +25,15 @@ class AuthService {
 				through: { attributes: [] }
 			}
 		})
+		// 更新最后登录时间
+		if (user) {
+			await User.update(
+				{ lastLogin: new Date() },
+				{ where: { id: user.id } }
+			)
+			return user
+		}
+		return null
 	}
 	async create(userData: {
 		username: string
@@ -33,7 +41,7 @@ class AuthService {
 		email?: string
 		phone?: string
 		nickname?: string
-		roles: string[]
+		roles: number[]
 	}): Promise<User> {
 		return User.create(userData)
 	}

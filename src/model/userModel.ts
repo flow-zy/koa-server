@@ -80,6 +80,11 @@ export default class User extends Model {
 	@Column(DataType.INTEGER)
 	declare sort: number
 
+	// 最后登录时间
+	@Comment('最后登录时间')
+	@Column(DataType.DATE)
+	declare lastLogin: Date
+
 	@BelongsToMany(() => RoleModel, () => RoleUserModel)
 	declare roles: RoleModel
 

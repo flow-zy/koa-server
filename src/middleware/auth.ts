@@ -127,6 +127,7 @@ export default function auth(options: Partial<AuthOptions> = {}) {
 			await next()
 		} catch (err) {
 			const error = err as any
+			console.log(error, 'error')
 			logger.error('Auth Error:', {
 				path: ctx.path,
 				method: ctx.method,

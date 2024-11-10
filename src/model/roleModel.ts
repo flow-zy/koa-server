@@ -1,19 +1,21 @@
 import {
-  AutoIncrement,
-  BelongsToMany,
-  Column,
-  Comment,
-  DataType,
-  Default,
-  Model,
-  PrimaryKey,
-  Table,
+	AutoIncrement,
+	BelongsToMany,
+	Column,
+	Comment,
+	DataType,
+	Default,
+	Model,
+	PrimaryKey,
+	Table
 } from 'sequelize-typescript'
 
 import User from './userModel'
 import RoleUserModel from './roleUserModel'
 import PermissionModel from './permissionModel'
 import RolePermissionModel from './rolePermissionModel'
+import MenuModel from './menuModel'
+import RoleMenuModel from './roleMenuModel'
 
 @Table({ tableName: 'role' })
 export default class RoleModel extends Model {
@@ -50,5 +52,7 @@ export default class RoleModel extends Model {
 
 	@BelongsToMany(() => PermissionModel, () => RolePermissionModel)
 	declare permissions: PermissionModel[]
-	menus: any
+
+	@BelongsToMany(() => MenuModel, () => RoleMenuModel)
+	declare menus: MenuModel[]
 }

@@ -31,6 +31,10 @@ export default class Log extends Model {
 	@Column(DataType.STRING)
 	declare method: string
 
+	@Comment('请求浏览器')
+	@Column(DataType.STRING)
+	declare browser: string
+
 	@Comment('请求路径')
 	@Column(DataType.STRING)
 	declare url: string

@@ -45,5 +45,7 @@ export enum UserMessage {
 	// 权限相关
 	ROLE_REQUIRED = '用户角色不能为空',
 	PERMISSION_DENIED = '权限不足',
-	SUPER_EXIT = '超级管理员已存在'
+	SUPER_EXIT = '超级管理员已存在',
+	LOGOUT_SUCCESS = '退出成功',
+	LOGOUT_ERROR = '退出失败'
 }

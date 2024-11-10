@@ -1,53 +1,66 @@
-import { Op } from 'sequelize'
 import Log from '../model/log'
-import { DataUtil } from '../utils/dataUtil'
+import { Op } from 'sequelize'
+import { DateUtil } from '../utils/dateUtil'
 
-class LogService {
+export class LogService {
 	/**
 	 * 获取日志列表
 	 */
-	async getList(params: any) {
-		const { current = 1, pageSize = 10, startTime, endTime } = params
-
+	static async getList(params: {
+		page: number
+		pageSize: number
+		username?: string
+		startTime?: string
+		endTime?: string
+		status?: number
+	}) {
+		const { page, pageSize, username, startTime, endTime, status } = params
 		const where: any = {}
+
+		if (username) {
+			where.username = {
+				[Op.like]: `%${username}%`
+			}
+		}
 
 		// 添加时间范围过滤
 		if (startTime && endTime) {
-			where.createdAt = {
+			where.created_at = {
 				[Op.between]: [new Date(startTime), new Date(endTime)]
 			}
 		} else if (startTime) {
-			where.createdAt = {
+			where.created_at = {
 				[Op.gte]: new Date(startTime)
 			}
 		} else if (endTime) {
-			where.createdAt = {
+			where.created_at = {
 				[Op.lte]: new Date(endTime)
 			}
 		}
 
+		if (status) {
+			where.status = status
+		}
+
 		const { count, rows } = await Log.findAndCountAll({
 			where,
-			order: [['id', 'DESC']],
-			offset: (Number(current) - 1) * Number(pageSize),
-			limit: Number(pageSize)
+			order: [['created_at', 'DESC']],
+			offset: (page - 1) * pageSize,
+			limit: pageSize
 		})
 
 		return {
-			list: DataUtil.toJSON(rows),
+			list: rows,
 			total: count,
-			current: Number(current),
-			pageSize: Number(pageSize)
+			page,
+			pageSize
 		}
 	}
 
 	/**
 	 * 获取日志详情
 	 */
-	async getDetail(id: number) {
-		const log = await Log.findByPk(id)
-		return log ? DataUtil.toJSON(log) : null
+	static async getDetail(id: number) {
+		return await Log.findByPk(id)
 	}
 }
-
-export const logService = new LogService()

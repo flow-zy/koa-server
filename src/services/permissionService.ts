@@ -145,6 +145,11 @@ class PermissionService {
 			pageSize: Number(pageSize)
 		}
 	}
+	// 全部权限
+	async getAll() {
+		const permissions = await PermissionModel.findAll()
+		return DataUtil.toJSON(permissions)
+	}
 }
 
 export const permissionService = new PermissionService()

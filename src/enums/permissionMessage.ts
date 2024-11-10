@@ -14,5 +14,7 @@ export enum PermissionMessage {
 	INVALID_PARAMS = '无效的参数',
 	NAME_REQUIRED = '权限名称不能为空',
 	CODE_REQUIRED = '权限码不能为空',
-	INVALID_STATUS = '无效的状态值'
+	INVALID_STATUS = '无效的状态值',
+	GET_ALL_SUCCESS = '获取全部权限成功',
+	GET_ALL_ERROR = '获取全部权限失败'
 }

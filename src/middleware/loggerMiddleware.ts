@@ -30,6 +30,8 @@ export const loggerMiddleware = async (ctx: Context, next: Next) => {
 	const arr = ctx.url.split('?')[0].split('/')
 	if (arr.length > 2) {
 		apipath = arr.slice(0, 3).join('/')
+	} else {
+		apipath = arr.join('/')
 	}
 	try {
 		// 执行后续中间件

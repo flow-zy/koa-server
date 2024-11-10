@@ -2,6 +2,7 @@ import { Op } from 'sequelize'
 import DictionaryModel from '../model/dictionaryModel'
 import { ParamsType } from '../types'
 import { getLimitAndOffset } from '../utils/util'
+import { DateUtil } from '../utils/dateUtil'
 
 interface DictTree extends DictionaryModel {
 	children?: DictTree[]
@@ -18,6 +19,8 @@ class DictionaryService {
 			if (dict.parentid === parentId) {
 				const node: DictTree = dict.toJSON()
 				const children = this.buildDictTree(dicts, dict.id)
+				// @ts-ignore
+				node.created_at = DateUtil.formatDateTime(node.created_at)
 				if (children.length) {
 					node.children = children
 				}
@@ -64,8 +67,8 @@ class DictionaryService {
 
 		return {
 			total: count,
-			pagesize: limit,
-			pagenumber: offset,
+			pagesize: pagesize,
+			pagenumber: pagenumber,
 			list: dictTree
 		}
 	}
@@ -97,7 +100,7 @@ class DictionaryService {
 		// 检查同级字典编码是否重复
 		const existDict = await DictionaryModel.findOne({
 			where: {
-				ditcode: params.ditcode,
+				dictcode: params.dictcode,
 				parentid: params.parentid || null,
 				status: 1
 			}
@@ -127,10 +130,10 @@ class DictionaryService {
 		}
 
 		// 检查同级字典编码是否重复
-		if (params.ditcode) {
+		if (params.dictcode) {
 			const existDict = await DictionaryModel.findOne({
 				where: {
-					ditcode: params.ditcode,
+					dictcode: params.dictcode,
 					parentid: params.parentid || null,
 					id: { [Op.ne]: id },
 					status: 1
@@ -153,11 +156,8 @@ class DictionaryService {
 		})
 		if (hasChildren) return false
 
-		const result = await DictionaryModel.update(
-			{ status: 0 },
-			{ where: { id } }
-		)
-		return result[0] > 0
+		const result = await DictionaryModel.destroy({ where: { id } })
+		return result
 	}
 
 	changeStatus = async (id: number) => {
@@ -171,6 +171,13 @@ class DictionaryService {
 			{ where: { id } }
 		)
 		return result[0] > 0
+	}
+	// 判断有没有子级
+	hasChildren = async (id: number) => {
+		const hasChildren = await DictionaryModel.findOne({
+			where: { parentid: id, status: 1 }
+		})
+		return hasChildren
 	}
 }
 

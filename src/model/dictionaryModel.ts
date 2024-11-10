@@ -27,11 +27,12 @@ export default class DictionaryModel extends Model {
 
 	@Comment('字典值')
 	@Column(DataType.STRING(255))
-	declare ditcode: string
+	declare dictcode: string
 
-	@Comment('字典类型')
-	@Column(DataType.STRING(255))
-	declare type: string
+	@Comment('字典类型 0:系统字典 1:业务字典')
+	@Default(1)
+	@Column(DataType.INTEGER)
+	declare type: number
 
 	@Comment('字典描述')
 	@Column(DataType.STRING(255))

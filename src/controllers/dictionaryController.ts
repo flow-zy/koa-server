@@ -26,6 +26,7 @@ export default class DictionaryController {
 			if (!res) return ctx.error(DictionaryMessage.DICT_LIST_ERROR)
 			return ctx.success(res, DictionaryMessage.DICT_LIST_SUCCESS)
 		} catch (error) {
+			console.log(error, 'erererer')
 			return ctx.error(HttpError.HTTP)
 		}
 	}
@@ -48,18 +49,13 @@ export default class DictionaryController {
 	@summary('添加字典')
 	@body({
 		dictname: { type: 'string', required: true, description: '字典名称' },
-		ditcode: { type: 'string', required: true, description: '字典编码' },
-		parentid: {
-			type: 'number',
-			required: false,
-			description: '父级字典ID'
-		},
+		dictcode: { type: 'string', required: true, description: '字典编码' },
 		sort: { type: 'number', required: false, description: '排序' }
 	})
 	static async addDict(ctx: Context) {
 		try {
 			const params = ctx.request.body as DictionaryModel
-			if (!params.dictname || !params.ditcode) {
+			if (!params.dictname || !params.dictcode) {
 				return ctx.error(DictionaryMessage.DICT_PARAMS_ERROR)
 			}
 
@@ -95,6 +91,9 @@ export default class DictionaryController {
 	static async deleteDict(ctx: Context) {
 		try {
 			const id = parseInt(ctx.params.id)
+			const hasChildren = await dictionaryService.hasChildren(id)
+			if (hasChildren)
+				return ctx.error(DictionaryMessage.DICT_HAS_CHILDREN)
 			if (!id) return ctx.error(DictionaryMessage.DICT_DELETE_ERROR)
 
 			const res = await dictionaryService.deleteDict(id)

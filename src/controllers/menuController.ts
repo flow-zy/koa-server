@@ -5,6 +5,7 @@ import { MenuMessage } from '../enums/menu'
 import MenuModel from '../model/menuModel'
 import { ParamsType } from '../types'
 import { HttpError } from '../enums'
+import { logger } from '../config/log4js'
 
 export default class MenuController {
 	@request('get', '/menu/list')
@@ -37,6 +38,8 @@ export default class MenuController {
 			if (!res) return ctx.error(MenuMessage.MENU_LIST_ERROR)
 			return ctx.success(res, MenuMessage.MENU_LIST_SUCCESS)
 		} catch (error) {
+			const err = error as Error
+			logger.error(`获取所有菜单错误: ${err.message}`)
 			return ctx.error(HttpError.HTTP)
 		}
 	}
@@ -86,6 +89,8 @@ export default class MenuController {
 	static async deleteMenu(ctx: Context) {
 		try {
 			const id = parseInt(ctx.params.id)
+			const hasChildren = await menuService.hasChildren(id)
+			if (hasChildren) return ctx.error(MenuMessage.MENU_HAS_CHILDREN)
 			if (!id) return ctx.error(MenuMessage.MENU_DELETE_ERROR)
 
 			const res = await menuService.deleteMenu(id)

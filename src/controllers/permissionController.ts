@@ -5,8 +5,8 @@ import { BusinessError } from '../utils/businessError'
 import { logger } from '../config/log4js'
 import { request, summary, tags } from 'koa-swagger-decorator'
 
-export class PermissionController {
-	@request('post', '/permission/create')
+export default class PermissionController {
+	@request('post', '/permission/add')
 	@tags(['Permission'])
 	@summary('增加权限')
 	static async create(ctx: Context) {
@@ -28,7 +28,7 @@ export class PermissionController {
 	/**
 	 * 更新权限
 	 */
-	@request('post', '/permission/update/{id}')
+	@request('put', '/permission/update/{id}')
 	@tags(['Permission'])
 	@summary('更新权限')
 	static async update(ctx: Context) {
@@ -51,7 +51,7 @@ export class PermissionController {
 	/**
 	 * 删除权限
 	 */
-	@request('post', '/permission/delete/{id}')
+	@request('delete', '/permission/delete/{id}')
 	@tags(['Permission'])
 	@summary('删除权限')
 	static async delete(ctx: Context) {
@@ -99,6 +99,19 @@ export class PermissionController {
 		} catch (error) {
 			console.error('获取权限列表错误:', error)
 			return ctx.error(PermissionMessage.GET_LIST_ERROR)
+		}
+	}
+	// 全部权限
+	@request('get', '/permission/all')
+	@tags(['Permission'])
+	@summary('获取全部权限')
+	static async getAll(ctx: Context) {
+		try {
+			const result = await permissionService.getAll()
+			return ctx.success(result, PermissionMessage.GET_ALL_SUCCESS)
+		} catch (error) {
+			console.error('获取全部权限错误:', error)
+			return ctx.error(PermissionMessage.GET_ALL_ERROR)
 		}
 	}
 }
