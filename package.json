@@ -19,9 +19,15 @@
     "build": "cross-env NODE_ENV=production tsc",
     "start": "node ./dist/index.js",
     "eslint": "eslint . --fix",
-    "clean-logs": "ts-node src/scripts/cleanLogs.ts"
+    "clean-logs": "ts-node src/scripts/cleanLogs.ts",
+    "prepare": "husky install",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "commit": "git-cz"
   },
   "dependencies": {
+    "@bin/flockmaster-blogs-service": "link:",
     "bcryptjs": "^2.4.3",
     "cos-nodejs-sdk-v5": "^2.12.3",
     "crypto-js": "^4.2.0",
@@ -56,6 +62,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
+    "@commitlint/cli": "^18.6.1",
+    "@commitlint/config-conventional": "^18.6.2",
     "@types/bcryptjs": "^2.4.2",
     "@types/crypto-js": "^4.2.2",
     "@types/jsonwebtoken": "^9.0.2",
@@ -68,12 +76,28 @@
     "@types/node": "^20.2.5",
     "@types/node-schedule": "^2.1.0",
     "@types/validator": "^13.7.17",
+    "commitizen": "^4.3.0",
     "cross-env": "^7.0.3",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-format": "^0.1.2",
     "eslint-plugin-prettier": "^5.2.1",
+    "git-cz": "^4.9.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.2",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }
