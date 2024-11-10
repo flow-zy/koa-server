@@ -3,7 +3,7 @@ import { permissionService } from '../services/permissionService'
 import { PermissionMessage } from '../enums/permissionMessage'
 import { BusinessError } from '../utils/businessError'
 import { logger } from '../config/log4js'
-import { request, summary, tags } from 'koa-swagger-decorator'
+import { request, summary, tags, path, body } from 'koa-swagger-decorator'
 
 export default class PermissionController {
 	@request('post', '/permission/add')
@@ -112,6 +112,28 @@ export default class PermissionController {
 		} catch (error) {
 			console.error('获取全部权限错误:', error)
 			return ctx.error(PermissionMessage.GET_ALL_ERROR)
+		}
+	}
+
+	@request('put', '/permission/status/{id}')
+	@tags(['权限管理'])
+	@summary('修改权限状态')
+	static async updateStatus(ctx: Context) {
+		const { id } = ctx.params
+
+		try {
+			// 检查权限是否存在
+			const permission = await permissionService.findById(Number(id))
+			if (!permission) {
+				return ctx.error(PermissionMessage.NOT_EXIST)
+			}
+
+			// 更新状态
+			await permissionService.updateStatus(Number(id))
+
+			ctx.success(null, PermissionMessage.UPDATE_STATUS_SUCCESS)
+		} catch (error) {
+			ctx.error(PermissionMessage.UPDATE_STATUS_ERROR)
 		}
 	}
 }

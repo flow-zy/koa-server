@@ -16,5 +16,7 @@ export enum PermissionMessage {
 	CODE_REQUIRED = '权限码不能为空',
 	INVALID_STATUS = '无效的状态值',
 	GET_ALL_SUCCESS = '获取全部权限成功',
-	GET_ALL_ERROR = '获取全部权限失败'
+	GET_ALL_ERROR = '获取全部权限失败',
+	UPDATE_STATUS_SUCCESS = '更新权限状态成功',
+	UPDATE_STATUS_ERROR = '更新权限状态失败'
 }

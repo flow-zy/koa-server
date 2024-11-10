@@ -90,8 +90,7 @@ class DictionaryService {
 		if (params.parentid) {
 			const parentDict = await DictionaryModel.findOne({
 				where: {
-					id: params.parentid,
-					status: 1
+					id: params.parentid
 				}
 			})
 			if (!parentDict) return false
@@ -101,8 +100,7 @@ class DictionaryService {
 		const existDict = await DictionaryModel.findOne({
 			where: {
 				dictcode: params.dictcode,
-				parentid: params.parentid || null,
-				status: 1
+				parentid: params.parentid || null
 			}
 		})
 		if (existDict) return false
@@ -121,8 +119,7 @@ class DictionaryService {
 			if (params.parentid) {
 				const parentDict = await DictionaryModel.findOne({
 					where: {
-						id: params.parentid,
-						status: 1
+						id: params.parentid
 					}
 				})
 				if (!parentDict) return false
@@ -135,8 +132,7 @@ class DictionaryService {
 				where: {
 					dictcode: params.dictcode,
 					parentid: params.parentid || null,
-					id: { [Op.ne]: id },
-					status: 1
+					id: { [Op.ne]: id }
 				}
 			})
 			if (existDict) return false
@@ -150,8 +146,7 @@ class DictionaryService {
 		// 检查是否有子字典
 		const hasChildren = await DictionaryModel.findOne({
 			where: {
-				parentid: id,
-				status: 1
+				parentid: id
 			}
 		})
 		if (hasChildren) return false

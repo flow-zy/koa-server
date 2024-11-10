@@ -3,6 +3,7 @@ import { DataUtil } from '../utils/dataUtil'
 import { BusinessError } from '../utils/businessError'
 import { PermissionMessage } from '../enums/permissionMessage'
 import PermissionModel from '../model/permissionModel'
+
 class PermissionService {
 	/**
 	 * 检查权限是否存在
@@ -149,6 +150,27 @@ class PermissionService {
 	async getAll() {
 		const permissions = await PermissionModel.findAll()
 		return DataUtil.toJSON(permissions)
+	}
+
+	/**
+	 * 根据ID查找权限
+	 */
+	async findById(id: number) {
+		return await PermissionModel.findByPk(id)
+	}
+
+	/**
+	 * 更新权限状态
+	 */
+	async updateStatus(id: number) {
+		const per = await PermissionModel.findByPk(id)
+		const status = per?.status === 0 ? 1 : 0
+		return await PermissionModel.update(
+			{ status },
+			{
+				where: { id }
+			}
+		)
 	}
 }
 

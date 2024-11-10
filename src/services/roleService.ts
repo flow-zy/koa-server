@@ -49,9 +49,6 @@ class RoleService {
 	getAllRole = async () => {
 		return await RoleModel.findAll({
 			order: [['sort', 'DESC']],
-			where: {
-				status: 1
-			},
 			attributes: {
 				exclude: ['deleted_at', 'updated_at']
 			}
@@ -60,8 +57,7 @@ class RoleService {
 	addRole = async (params: Partial<RoleModel>) => {
 		const existRole = await RoleModel.findOne({
 			where: {
-				name: params.name,
-				status: 1 // 只检查未删除的角色
+				name: params.name
 			}
 		})
 		if (existRole) return false
@@ -92,13 +88,10 @@ class RoleService {
 		const transaction = await RoleModel.sequelize!.transaction()
 
 		try {
-			const roleResult = await RoleModel.update(
-				{ status: 0 },
-				{
-					where: { id },
-					transaction
-				}
-			)
+			const roleResult = await RoleModel.destroy({
+				where: { id },
+				transaction
+			})
 
 			await RolePermissionModel.destroy({
 				where: { role_id: id },
@@ -106,7 +99,7 @@ class RoleService {
 			})
 
 			await transaction.commit()
-			return roleResult[0] > 0
+			return roleResult
 		} catch (error) {
 			await transaction.rollback()
 			return false
@@ -117,8 +110,7 @@ class RoleService {
 			const existRole = await RoleModel.findOne({
 				where: {
 					name: params.name,
-					id: { [Op.ne]: id },
-					status: 1
+					id: { [Op.ne]: id }
 				}
 			})
 			if (existRole) return false

@@ -38,7 +38,7 @@ class MenuService {
 		const { limit, offset } = getLimitAndOffset(pagesize, pagenumber)
 		const options: any = { limit, offset }
 
-		const where: any = { ..._params, status: 1 }
+		const where: any = { ..._params }
 		// 添加时间范围过滤
 		if (startTime && endTime) {
 			where.created_at = {
@@ -78,7 +78,6 @@ class MenuService {
 	getAllMenu = async () => {
 		const menus = await MenuModel.findAll({
 			order: [['sort', 'DESC']],
-			where: { status: 1 },
 			attributes: {
 				exclude: ['deleted_at', 'updated_at']
 			}
@@ -93,8 +92,7 @@ class MenuService {
 		if (params.parentid) {
 			const parentMenu = await MenuModel.findOne({
 				where: {
-					id: params.parentid,
-					status: 1
+					id: params.parentid
 				}
 			})
 			if (!parentMenu) return false
@@ -104,8 +102,7 @@ class MenuService {
 		const existMenu = await MenuModel.findOne({
 			where: {
 				name: params.name,
-				parentid: params.parentid || null,
-				status: 1
+				parentid: params.parentid || null
 			}
 		})
 		if (existMenu) return false
@@ -146,8 +143,7 @@ class MenuService {
 			if (params.parentid) {
 				const parentMenu = await MenuModel.findOne({
 					where: {
-						id: params.parentid,
-						status: 1
+						id: params.parentid
 					}
 				})
 				if (!parentMenu) return false
@@ -160,8 +156,7 @@ class MenuService {
 				where: {
 					name: params.name,
 					parentid: params.parentid || null,
-					id: { [Op.ne]: id },
-					status: 1
+					id: { [Op.ne]: id }
 				}
 			})
 			if (existMenu) return false
