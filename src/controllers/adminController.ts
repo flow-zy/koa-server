@@ -6,6 +6,8 @@ import userService from '../services/authService'
 import { generateToken, defaultOptions } from '../middleware/auth'
 import { logger } from '../config/log4js'
 import { UserMessage } from '../enums'
+import { CryptoUtil } from '../utils/cryptoUtil'
+
 // 登录参数验证
 interface LoginParams {
 	username: string
@@ -50,14 +52,17 @@ export default class AdminController {
 				AuthMessage.PASSWORD_REQUIRED
 			)
 
+			// 解密前端传来的密码
+			const decryptedPassword = CryptoUtil.aesDecrypt(password)
+
 			// 查找用户
 			const user = await userService.findByUsername(username)
 			if (!user) {
 				ErrorUtil.throw(AuthMessage.USER_NOT_FOUND)
 			}
 
-			// 验证密码
-			const isValid = await user?.validatePassword(password!)
+			// 验证密码 - 使用解密后的密码进行验证
+			const isValid = await user?.validatePassword(decryptedPassword)
 			if (!isValid) {
 				ErrorUtil.throw(AuthMessage.PASSWORD_ERROR)
 			}
@@ -73,25 +78,22 @@ export default class AdminController {
 				},
 				defaultOptions
 			)
+
 			const userInfo = await userService.userLogin(user.username)
-			// 更新最后登录时间
-			// await user.update({ last_login: new Date() })
-			// 返回用户信息和 token
 			const result = {
 				token: `Bearer ${token}`,
 				userInfo
 			}
 
-			// 记录登录日志
 			logger.info('管理员登录成功', {
 				username,
 				ip: ctx.ip,
 				userAgent: ctx.get('user-agent')
 			})
+
 			return ctx.success(result, AuthMessage.LOGIN_SUCCESS)
 		} catch (err) {
 			const error = err as any
-			// 记录失败日志
 			logger.warn('管理员登录失败', {
 				username,
 				ip: ctx.ip,

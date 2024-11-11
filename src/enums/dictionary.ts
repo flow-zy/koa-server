@@ -15,6 +15,7 @@ export enum DictionaryMessage {
 	// 删除相关
 	DICT_DELETE_SUCCESS = '删除字典成功',
 	DICT_DELETE_ERROR = '删除字典失败',
+	DICT_HAS_CHILDREN = '该字典下有子级数据，不可删除',
 
 	// 状态相关
 	DICT_STATUS_SUCCESS = '修改字典状态成功',
@@ -33,6 +34,6 @@ export enum DictionaryMessage {
 	// 其他
 	DICT_NOT_FOUND = '字典不存在',
 	DICT_OPERATION_ERROR = '字典操作失败',
-	DICT_HAS_CHILDREN = '该字典下存在子字典，无法操作',
-	DICT_CODE_EXISTS = '字典编码已存在'
+	DICT_CODE_EXISTS = '字典编码已存在',
+	DICT_GET_SUCCESS = '获取字典成功'
 }

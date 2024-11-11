@@ -1,179 +1,235 @@
-import { Op } from 'sequelize'
+import { BaseDao, QueryParams } from '../dao/baseDao'
 import DictionaryModel from '../model/dictionaryModel'
-import { ParamsType } from '../types'
-import { getLimitAndOffset } from '../utils/util'
+import { Op } from 'sequelize'
+import { BusinessError } from '../utils/businessError'
 import { DateUtil } from '../utils/dateUtil'
+import { DictionaryMessage } from '../enums/dictionary'
 
-interface DictTree extends DictionaryModel {
-	children?: DictTree[]
-}
+export class DictionaryService {
+	/**
+	 * 获取字典列表
+	 */
+	async getList(
+		params: QueryParams & {
+			keyword?: string
+			status?: number
+			startTime?: string
+			endTime?: string
+		}
+	) {
+		const { keyword, status, startTime, endTime, ...restParams } = params
 
-class DictionaryService {
-	private buildDictTree = (
-		dicts: DictionaryModel[],
-		parentId: number | null = null
-	): DictTree[] => {
-		const tree: DictTree[] = []
-
-		dicts.forEach((dict) => {
-			if (dict.parentid === parentId) {
-				const node: DictTree = dict.toJSON()
-				const children = this.buildDictTree(dicts, dict.id)
-				// @ts-ignore
-				node.created_at = DateUtil.formatDateTime(node.created_at)
-				if (children.length) {
-					node.children = children
-				}
-				tree.push(node)
-			}
-		})
-
-		return tree
-	}
-
-	getDictList = async (params: ParamsType<DictionaryModel>) => {
-		const { pagesize, pagenumber, startTime, endTime, ..._params } = params
-
-		const { limit, offset } = getLimitAndOffset(pagesize, pagenumber)
-		const options: any = { limit, offset }
-
-		const where: any = { ..._params, status: 1 }
-		// 添加时间范围过滤
-		if (startTime && endTime) {
-			where.created_at = {
-				[Op.between]: [new Date(startTime), new Date(endTime)]
-			}
-		} else if (startTime) {
-			where.created_at = {
-				[Op.gte]: new Date(startTime)
-			}
-		} else if (endTime) {
-			where.created_at = {
-				[Op.lte]: new Date(endTime)
-			}
+		const queryParams: QueryParams = {
+			...restParams,
+			where: {
+				...(keyword && {
+					[Op.or]: [
+						{ dictname: { [Op.like]: `%${keyword}%` } },
+						{ dictcode: { [Op.like]: `%${keyword}%` } }
+					]
+				}),
+				...(status !== undefined && { status }),
+				...(startTime &&
+					endTime && {
+						created_at: {
+							[Op.between]: [
+								DateUtil.formatDate(new Date(startTime)),
+								DateUtil.formatDate(new Date(endTime))
+							]
+						}
+					})
+			},
+			order: [
+				['sort', 'ASC'],
+				['created_at', 'DESC']
+			]
 		}
 
-		if (Object.keys(_params).length > 0) options.where = where
+		const result = await BaseDao.findByPage(DictionaryModel, queryParams)
 
-		const { count, rows } = await DictionaryModel.findAndCountAll({
-			...options,
-			order: [['sort', 'DESC']],
-			attributes: {
-				exclude: ['deleted_at', 'updated_at']
-			}
-		})
-
-		const dictTree = this.buildDictTree(rows)
+		// 将列表数据转换为树形结构
+		const treeData = this.buildDictionaryTree(result.list)
 
 		return {
-			total: count,
-			pagesize: pagesize,
-			pagenumber: pagenumber,
-			list: dictTree
+			...result,
+			list: treeData
 		}
 	}
 
-	getAllDict = async () => {
-		const dicts = await DictionaryModel.findAll({
-			order: [['sort', 'DESC']],
-			where: { status: 1 },
-			attributes: {
-				exclude: ['deleted_at', 'updated_at']
-			}
+	/**
+	 * 获取所有字典
+	 */
+	async getAll(params: QueryParams = {}) {
+		const result = await BaseDao.findAll(DictionaryModel, {
+			...params,
+			order: [['sort', 'ASC']]
 		})
 
-		return this.buildDictTree(dicts)
+		// 将列表数据转换为树形结构
+		const treeData = this.buildDictionaryTree(result.list)
+
+		return {
+			...result,
+			list: treeData
+		}
 	}
 
-	addDict = async (params: Partial<DictionaryModel>) => {
-		// 检查父级是否存在
-		if (params.parentid) {
-			const parentDict = await DictionaryModel.findOne({
-				where: {
-					id: params.parentid
-				}
-			})
-			if (!parentDict) return false
-		}
+	/**
+	 * 构建字典树
+	 */
+	private buildDictionaryTree(
+		dictList: any[],
+		parentId: number | null = null
+	): any[] {
+		return dictList
+			.filter((dict) => dict.parentid === parentId)
+			.map((dict) => ({
+				...dict,
+				children: this.buildDictionaryTree(dictList, dict.id)
+			}))
+			.sort((a, b) => a.sort - b.sort)
+	}
 
-		// 检查同级字典编码是否重复
-		const existDict = await DictionaryModel.findOne({
-			where: {
-				dictcode: params.dictcode,
-				parentid: params.parentid || null
-			}
+	/**
+	 * 创建字典
+	 */
+	async create(data: Partial<DictionaryModel>) {
+		// 检查编码是否存在
+		const exists = await BaseDao.findOne(DictionaryModel, {
+			where: { dictcode: data.dictcode }
 		})
-		if (existDict) return false
 
-		const result = await DictionaryModel.create(params)
-		return result ? true : false
-	}
+		if (exists) {
+			throw new BusinessError(DictionaryMessage.DICT_CODE_EXISTS)
+		}
 
-	updateDict = async (id: number, params: Partial<DictionaryModel>) => {
-		// 检查是否修改了父级ID
-		if (params.parentid !== undefined) {
-			// 不能将字典设置为自己的子字典
-			if (params.parentid === id) return false
-
-			// 检查新的父级是否存在
-			if (params.parentid) {
-				const parentDict = await DictionaryModel.findOne({
-					where: {
-						id: params.parentid
-					}
-				})
-				if (!parentDict) return false
+		// 如果有父级ID，检查父级是否存在
+		if (data.parentid) {
+			const parent = await BaseDao.findById(
+				DictionaryModel,
+				data.parentid
+			)
+			if (!parent) {
+				throw new BusinessError(DictionaryMessage.DICT_PARENT_NOT_FOUND)
 			}
 		}
 
-		// 检查同级字典编码是否重复
-		if (params.dictcode) {
-			const existDict = await DictionaryModel.findOne({
+		return await BaseDao.create(DictionaryModel, {
+			...data,
+			status: data.status ?? 1,
+			sort: data.sort ?? 1,
+			parentid: data.parentid ?? undefined
+		})
+	}
+
+	/**
+	 * 更新字典
+	 */
+	async update(id: number, data: Partial<DictionaryModel>) {
+		// 检查编码是否与其他记录冲突
+		if (data.dictcode) {
+			const exists = await BaseDao.findOne(DictionaryModel, {
 				where: {
-					dictcode: params.dictcode,
-					parentid: params.parentid || null,
+					dictcode: data.dictcode,
 					id: { [Op.ne]: id }
 				}
 			})
-			if (existDict) return false
+
+			if (exists) {
+				throw new BusinessError(DictionaryMessage.DICT_CODE_EXISTS)
+			}
 		}
 
-		const result = await DictionaryModel.update(params, { where: { id } })
-		return result[0] > 0
+		// 如果更新父级ID，检查父级是否存在且不能设置为自己或自己的子级
+		if (data.parentid) {
+			if (data.parentid === id) {
+				throw new BusinessError(DictionaryMessage.DICT_PARENT_ERROR)
+			}
+
+			const parent = await BaseDao.findById(
+				DictionaryModel,
+				data.parentid
+			)
+			if (!parent) {
+				throw new BusinessError(DictionaryMessage.DICT_PARENT_NOT_FOUND)
+			}
+
+			// 检查是否设置为自己的子级
+			const children = await this.getChildrenIds(id)
+			if (children.includes(data.parentid)) {
+				throw new BusinessError(DictionaryMessage.DICT_PARENT_ERROR)
+			}
+		}
+
+		return await BaseDao.update(DictionaryModel, data, { id })
 	}
 
-	deleteDict = async (id: number) => {
-		// 检查是否有子字典
-		const hasChildren = await DictionaryModel.findOne({
-			where: {
-				parentid: id
-			}
-		})
-		if (hasChildren) return false
+	/**
+	 * 获取所有子级ID
+	 */
+	private async getChildrenIds(id: number): Promise<number[]> {
+		const allDict = await BaseDao.findAll(DictionaryModel, {})
+		const result: number[] = []
 
-		const result = await DictionaryModel.destroy({ where: { id } })
+		const findChildren = (parentId: number) => {
+			const children = allDict.list.filter(
+				(dict: Partial<DictionaryModel>) => dict.parentid === parentId
+			)
+			children.forEach((child: Partial<DictionaryModel>) => {
+				result.push(child.id!)
+				findChildren(child.id!)
+			})
+		}
+
+		findChildren(id)
 		return result
 	}
 
-	changeStatus = async (id: number) => {
-		const dict = await DictionaryModel.findByPk(id)
-		if (!dict) return false
-
-		const newStatus = dict.status === 1 ? 0 : 1
-
-		const result = await DictionaryModel.update(
-			{ status: newStatus },
-			{ where: { id } }
-		)
-		return result[0] > 0
-	}
-	// 判断有没有子级
-	hasChildren = async (id: number) => {
-		const hasChildren = await DictionaryModel.findOne({
-			where: { parentid: id, status: 1 }
+	/**
+	 * 删除字典
+	 */
+	async delete(id: number) {
+		// 检查是否存在子级
+		const children = await BaseDao.findOne(DictionaryModel, {
+			where: { parentid: id }
 		})
-		return hasChildren
+
+		if (children) {
+			throw new BusinessError(DictionaryMessage.DICT_HAS_CHILDREN)
+		}
+
+		return await BaseDao.delete(DictionaryModel, { id })
+	}
+
+	/**
+	 * 获取字典详情
+	 */
+	async getDetail(id: number) {
+		return await BaseDao.findById(DictionaryModel, id)
+	}
+
+	/**
+	 * 更新字典状态
+	 */
+	async updateStatus(id: number) {
+		const dict = await BaseDao.findById(DictionaryModel, id)
+		if (!dict) {
+			throw new BusinessError(DictionaryMessage.DICT_NOT_FOUND)
+		}
+
+		const status = dict.status === 1 ? 0 : 1
+		return await BaseDao.update(DictionaryModel, { status }, { id })
+	}
+
+	/**
+	 * 根据编码获取字典
+	 */
+	async getByCode(code: string) {
+		return await BaseDao.findOne(DictionaryModel, {
+			where: { dictcode: code, status: 1 },
+			order: [['sort', 'ASC']]
+		})
 	}
 }
 
-export default new DictionaryService()
+export const dictionaryService = new DictionaryService()

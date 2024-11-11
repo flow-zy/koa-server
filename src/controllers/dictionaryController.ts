@@ -1,122 +1,180 @@
 import { Context } from 'koa'
-import { tags, summary, request, query, body } from 'koa-swagger-decorator'
-import dictionaryService from '../services/dictionaryService'
+import {
+	request,
+	summary,
+	tags,
+	query,
+	path,
+	body
+} from 'koa-swagger-decorator'
+import { dictionaryService } from '../services/dictionaryService'
+import { logger } from '../config/log4js'
 import { DictionaryMessage } from '../enums/dictionary'
-import DictionaryModel from '../model/dictionaryModel'
-import { ParamsType } from '../types'
-import { HttpError } from '../enums'
 
 export default class DictionaryController {
 	@request('get', '/dictionary/list')
-	@tags(['Dictionary'])
+	@tags(['字典管理'])
 	@summary('获取字典列表')
 	@query({
-		pagesize: { type: 'number', required: true, description: '每页条数' },
-		pagenumber: { type: 'number', required: true, description: '页码' },
-		dictname: { type: 'string', required: false, description: '字典名称' },
-		dictcode: { type: 'string', required: false, description: '字典编码' },
+		pagenumber: { type: 'number', required: false, default: 1 },
+		pagesize: { type: 'number', required: false, default: 10 },
+		keyword: { type: 'string', required: false },
+		status: { type: 'number', required: false },
 		startTime: { type: 'string', required: false },
 		endTime: { type: 'string', required: false }
 	})
-	static async getDictList(ctx: Context) {
+	static async getList(ctx: Context) {
 		try {
-			const params = ctx.request
-				.query as unknown as ParamsType<DictionaryModel>
-			const res = await dictionaryService.getDictList(params)
-			if (!res) return ctx.error(DictionaryMessage.DICT_LIST_ERROR)
-			return ctx.success(res, DictionaryMessage.DICT_LIST_SUCCESS)
+			const result = await dictionaryService.getList(ctx.query)
+			ctx.success(result)
 		} catch (error) {
-			console.log(error, 'erererer')
-			return ctx.error(HttpError.HTTP)
+			logger.error('获取字典列表失败:', error)
+			ctx.error('获取字典列表失败')
 		}
 	}
 
 	@request('get', '/dictionary/all')
-	@tags(['Dictionary'])
+	@tags(['字典管理'])
 	@summary('获取所有字典')
-	static async getAllDict(ctx: Context) {
+	static async getAll(ctx: Context) {
 		try {
-			const res = await dictionaryService.getAllDict()
-			if (!res) return ctx.error(DictionaryMessage.DICT_LIST_ERROR)
-			return ctx.success(res, DictionaryMessage.DICT_LIST_SUCCESS)
+			const result = await dictionaryService.getAll()
+			ctx.success(result)
 		} catch (error) {
-			return ctx.error(HttpError.HTTP)
+			logger.error('获取所有字典失败:', error)
+			ctx.error('获取所有字典失败')
 		}
 	}
 
 	@request('post', '/dictionary/add')
-	@tags(['Dictionary'])
+	@tags(['字典管理'])
 	@summary('添加字典')
 	@body({
-		dictname: { type: 'string', required: true, description: '字典名称' },
-		dictcode: { type: 'string', required: true, description: '字典编码' },
-		sort: { type: 'number', required: false, description: '排序' }
+		dictname: { type: 'string', required: true },
+		dictcode: { type: 'string', required: true },
+		sort: { type: 'number', required: false },
+		status: { type: 'number', required: false },
+		remark: { type: 'string', required: false }
 	})
-	static async addDict(ctx: Context) {
+	static async create(ctx: Context) {
 		try {
-			const params = ctx.request.body as DictionaryModel
-			if (!params.dictname || !params.dictcode) {
-				return ctx.error(DictionaryMessage.DICT_PARAMS_ERROR)
-			}
-
-			const res = await dictionaryService.addDict(params)
-			if (!res) return ctx.error(DictionaryMessage.DICT_ADD_ERROR)
-			return ctx.success(null, DictionaryMessage.DICT_ADD_SUCCESS)
+			const result = await dictionaryService.create(ctx.request.body)
+			ctx.success(result, DictionaryMessage.DICT_ADD_SUCCESS)
 		} catch (error) {
-			return ctx.error(HttpError.HTTP)
+			logger.error('添加字典失败:', error)
+			ctx.error(
+				error instanceof Error
+					? error.message
+					: DictionaryMessage.DICT_OPERATION_ERROR
+			)
 		}
 	}
 
 	@request('put', '/dictionary/update/{id}')
-	@tags(['Dictionary'])
-	@summary('修改字典')
-	static async updateDict(ctx: Context) {
+	@tags(['字典管理'])
+	@summary('更新字典')
+	@path({
+		id: { type: 'number', required: true }
+	})
+	static async update(ctx: Context) {
 		try {
-			const id = parseInt(ctx.params.id)
-			const params = ctx.request.body as Partial<DictionaryModel>
-
-			if (!id) return ctx.error(DictionaryMessage.DICT_UPDATE_ERROR)
-
-			const res = await dictionaryService.updateDict(id, params)
-			if (!res) return ctx.error(DictionaryMessage.DICT_UPDATE_ERROR)
-			return ctx.success(null, DictionaryMessage.DICT_UPDATE_SUCCESS)
+			const { id } = ctx.params
+			const result = await dictionaryService.update(
+				Number(id),
+				ctx.request.body
+			)
+			ctx.success(result, DictionaryMessage.DICT_UPDATE_SUCCESS)
 		} catch (error) {
-			return ctx.error(HttpError.HTTP)
+			logger.error('更新字典失败:', error)
+			ctx.error(
+				error instanceof Error
+					? error.message
+					: DictionaryMessage.DICT_OPERATION_ERROR
+			)
 		}
 	}
 
 	@request('delete', '/dictionary/delete/{id}')
-	@tags(['Dictionary'])
+	@tags(['字典管理'])
 	@summary('删除字典')
-	static async deleteDict(ctx: Context) {
+	@path({
+		id: { type: 'number', required: true }
+	})
+	static async delete(ctx: Context) {
 		try {
-			const id = parseInt(ctx.params.id)
-			const hasChildren = await dictionaryService.hasChildren(id)
-			if (hasChildren)
-				return ctx.error(DictionaryMessage.DICT_HAS_CHILDREN)
-			if (!id) return ctx.error(DictionaryMessage.DICT_DELETE_ERROR)
-
-			const res = await dictionaryService.deleteDict(id)
-			if (!res) return ctx.error(DictionaryMessage.DICT_DELETE_ERROR)
-			return ctx.success(null, DictionaryMessage.DICT_DELETE_SUCCESS)
+			const { id } = ctx.params
+			await dictionaryService.delete(Number(id))
+			ctx.success(null, DictionaryMessage.DICT_DELETE_SUCCESS)
 		} catch (error) {
-			return ctx.error(HttpError.HTTP)
+			logger.error('删除字典失败:', error)
+			ctx.error(
+				error instanceof Error
+					? error.message
+					: DictionaryMessage.DICT_OPERATION_ERROR
+			)
+		}
+	}
+
+	@request('get', '/dictionary/detail/{id}')
+	@tags(['字典管理'])
+	@summary('获取字典详情')
+	@path({
+		id: { type: 'number', required: true }
+	})
+	static async getDetail(ctx: Context) {
+		try {
+			const { id } = ctx.params
+			const result = await dictionaryService.getDetail(Number(id))
+			ctx.success(result)
+		} catch (error) {
+			logger.error('获取字典详情失败:', error)
+			ctx.error(
+				error instanceof Error
+					? error.message
+					: DictionaryMessage.DICT_OPERATION_ERROR
+			)
 		}
 	}
 
 	@request('put', '/dictionary/status/{id}')
-	@tags(['Dictionary'])
-	@summary('切换字典状态')
-	static async changeStatus(ctx: Context) {
+	@tags(['字典管理'])
+	@summary('更新字典状态')
+	@path({
+		id: { type: 'number', required: true }
+	})
+	static async updateStatus(ctx: Context) {
 		try {
-			const id = parseInt(ctx.params.id)
-			if (!id) return ctx.error(DictionaryMessage.DICT_PARAMS_ERROR)
-
-			const res = await dictionaryService.changeStatus(id)
-			if (!res) return ctx.send(DictionaryMessage.DICT_STATUS_ERROR)
-			return ctx.success(null, DictionaryMessage.DICT_STATUS_SUCCESS)
+			const { id } = ctx.params
+			await dictionaryService.updateStatus(Number(id))
+			ctx.success(null, DictionaryMessage.DICT_STATUS_SUCCESS)
 		} catch (error) {
-			return ctx.error(HttpError.HTTP)
+			logger.error('更新字典状态失败:', error)
+			ctx.error(
+				error instanceof Error
+					? error.message
+					: DictionaryMessage.DICT_OPERATION_ERROR
+			)
+		}
+	}
+
+	@request('get', '/dictionary/code/{code}')
+	@tags(['字典管理'])
+	@summary('根据编码获取字典')
+	@path({
+		code: { type: 'string', required: true }
+	})
+	static async getByCode(ctx: Context) {
+		try {
+			const { code } = ctx.params
+			const result = await dictionaryService.getByCode(code)
+			ctx.success(result, DictionaryMessage.DICT_GET_SUCCESS)
+		} catch (error) {
+			logger.error('获取字典失败:', error)
+			ctx.error(
+				error instanceof Error
+					? error.message
+					: DictionaryMessage.DICT_OPERATION_ERROR
+			)
 		}
 	}
 }

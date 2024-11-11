@@ -1,40 +1,107 @@
+import UserModel from '../model/userModel'
 import RoleModel from '../model/roleModel'
-import User from '../model/userModel'
+import MenuModel from '../model/menuModel'
+import PermissionModel from '../model/permissionModel'
+import { DataUtil } from '../utils/dataUtil'
 
 class AuthService {
-	async findByUsername(username: string): Promise<User | null> {
-		return User.findOne({
+	async findByUsername(username: string): Promise<UserModel | null> {
+		return UserModel.findOne({
 			where: { username }
 		})
 	}
 
-	async findById(id: number): Promise<User | null> {
-		return User.findByPk(id)
+	async findById(id: number): Promise<UserModel | null> {
+		return UserModel.findByPk(id)
 	}
 
 	async userLogin(username: string) {
-		const user = await User.findOne({
+		const user = await UserModel.findOne({
 			where: { username },
-			attributes: {
-				exclude: ['password', 'deleted_at']
-			},
-			raw: true,
-			include: {
-				model: RoleModel,
-				attributes: ['id', 'name'],
-				through: { attributes: [] }
-			}
+			include: [
+				{
+					model: RoleModel,
+					include: [
+						{
+							model: MenuModel,
+							through: { attributes: [] },
+							attributes: {
+								exclude: ['deleted_at', 'updated_at']
+							},
+							where: { status: 1 },
+							required: false
+						},
+						{
+							model: PermissionModel,
+							through: { attributes: [] },
+							attributes: ['id', 'name', 'code'],
+							where: { status: 1 },
+							required: false
+						}
+					]
+				}
+			]
 		})
-		// 更新最后登录时间
-		if (user) {
-			await User.update(
-				{ lastLogin: new Date() },
-				{ where: { id: user.id } }
+
+		if (!user) return null
+
+		const userData = DataUtil.toJSON(user)
+
+		const roles = userData.roles || []
+
+		const menusSet = new Set()
+		const menus = roles.reduce((acc: any[], role: any) => {
+			role.menus?.forEach((menu: any) => {
+				if (!menusSet.has(menu.id)) {
+					menusSet.add(menu.id)
+					acc.push(menu)
+				}
+			})
+			return acc
+		}, [])
+
+		const permissionsSet = new Set()
+		const permissions = roles.reduce((acc: any[], role: any) => {
+			role.permissions?.forEach((permission: any) => {
+				if (!permissionsSet.has(permission.id)) {
+					permissionsSet.add(permission.id)
+					acc.push(permission)
+				}
+			})
+			return acc
+		}, [])
+
+		const menuTree = this.buildMenuTree(menus)
+
+		return {
+			id: userData.id,
+			username: userData.username,
+			nickname: userData.nickname,
+			email: userData.email,
+			phone: userData.phone,
+			avatar: userData.avatar,
+			roles: roles.map((role: RoleModel) => ({
+				id: role.id,
+				name: role.name,
+				nickname: role.nickname
+			})),
+			menus: menuTree,
+			permissions: permissions.map(
+				(p: Partial<PermissionModel>) => p.code
 			)
-			return user
 		}
-		return null
 	}
+
+	private buildMenuTree(menus: any[], parentId: number | null = null): any[] {
+		return menus
+			.filter((menu) => menu.parentid === parentId)
+			.map((menu) => ({
+				...menu,
+				children: this.buildMenuTree(menus, menu.id)
+			}))
+			.sort((a, b) => a.sort - b.sort)
+	}
+
 	async create(userData: {
 		username: string
 		password: string
@@ -42,8 +109,8 @@ class AuthService {
 		phone?: string
 		nickname?: string
 		roles: number[]
-	}): Promise<User> {
-		return User.create(userData)
+	}): Promise<UserModel> {
+		return UserModel.create(userData)
 	}
 }
 
