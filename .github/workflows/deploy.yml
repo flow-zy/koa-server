@@ -72,7 +72,7 @@ jobs:
       - name: Deploy to GitHub Repository
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          token: ${{ secrets.SERVER_TOKEN }}  # 使用个人访问令牌
+          token: ${{ secrets.SERVER_TOKEN }}
           repository-name: flow-zy/koa-server
           branch: master
           folder: dist
@@ -81,10 +81,19 @@ jobs:
           git-config-email: ${{ secrets.GIT_EMAIL }}
           commit-message: "Deploy: ${{ github.sha }}"
 
-      - name: Setup SSH for server deployment
-        uses: webfactory/ssh-agent@v0.8.0
+      # 配置 SSH
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          if_key_exists: replace
+
+      # 添加服务器到已知主机
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to server
         env:
