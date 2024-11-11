@@ -95,22 +95,25 @@ jobs:
       #     mkdir -p ~/.ssh
       #     ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      # - name: Deploy to server
+      #   env:
+      #     SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      #     SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+      #     DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      #   run: |
+      #     # 创建部署目录（如果不存在）
+      #     ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
+
+      #     # 复制构建文件到服务器
+      #     scp -o StrictHostKeyChecking=no -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+      #     scp -o StrictHostKeyChecking=no package.json $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+      #     scp -o StrictHostKeyChecking=no pnpm-lock.yaml $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+
+      #     # 在服务器上执行部署命令
+      #     ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
+      #       npm install -g pnpm && \
+      #       pnpm install --production && \
+      #       pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production"
       - name: Deploy to server
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          # 创建部署目录（如果不存在）
-          ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
-
-          # 复制构建文件到服务器
-          scp -o StrictHostKeyChecking=no -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-          scp -o StrictHostKeyChecking=no package.json $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-          scp -o StrictHostKeyChecking=no pnpm-lock.yaml $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-
-          # 在服务器上执行部署命令
-          ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
-            npm install -g pnpm && \
-            pnpm install --production && \
-            pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production"
+          pnpm build
