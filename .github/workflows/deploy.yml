@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 env:
-  NODE_VERSION: '18.x'
+  NODE_VERSION: '18.16.1'
 
 jobs:
   deploy:
@@ -19,19 +19,33 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: latest
+          version: 8
           run_install: false
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          pnpm install
 
       - name: Build
-        run: pnpm build
+        run: |
+          pnpm build
         env:
           NODE_ENV: production
           MYSQL_DB: ${{ secrets.MYSQL_DB }}
@@ -46,42 +60,33 @@ jobs:
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
 
-      # 提交并推送到目标仓库
-      - name: Commit and push
-        run: |
-          cd /tmp/deploy/koa-server
-          git add .
-          git commit -m "Deploy: ${{ github.sha }}" || echo "No changes to commit"
-          git push origin main
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
 
-      # 设置 PM2 配置文件
-      - name: Create PM2 config
-        run: |
-          echo '{
-            "apps": [{
-              "name": "rac-admin",
-              "script": "dist/app.js",
-              "instances": 2,
-              "exec_mode": "cluster",
-              "env_production": {
-                "NODE_ENV": "production",
-                "MYSQL_DB": "${{ secrets.MYSQL_DB }}",
-                "MYSQL_HOST": "${{ secrets.MYSQL_HOST }}",
-                "MYSQL_USER": "${{ secrets.MYSQL_USER }}",
-                "MYSQL_PWD": "${{ secrets.MYSQL_PWD }}",
-                "APP_PORT": "${{ secrets.APP_PORT }}",
-                "JWT_SECRET": "${{ secrets.JWT_SECRET }}",
-                "AES_KEY": "${{ secrets.AES_KEY }}",
-                "AES_IV": "${{ secrets.AES_IV }}",
-                "REDIS_HOST": "${{ secrets.REDIS_HOST }}",
-                "REDIS_PORT": "${{ secrets.REDIS_PORT }}",
-                "REDIS_PASSWORD": "${{ secrets.REDIS_PASSWORD }}"
-              }
-            }]
-          }' > ecosystem.config.json
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # 启动应用
-      - name: Start application
+      - name: Deploy to server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          npm install pm2 -g
-          pm2 start ecosystem.config.json --env production
+          # 创建部署目录（如果不存在）
+          ssh $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
+
+          # 复制构建文件到服务器
+          scp -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+          scp package.json $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+          scp pnpm-lock.yaml $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+
+          # 在服务器上执行部署命令
+          ssh $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
+            npm install -g pnpm && \
+            pnpm install --production && \
+            pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production"
