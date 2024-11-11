@@ -46,17 +46,13 @@ jobs:
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
 
-      # 部署到 GitHub 仓库
-      - name: Push to koa-server repository
-        uses: cpina/github-action-push-to-another-repository@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source-directory: 'dist'
-          destination-github-username: 'flow-zy'
-          destination-repository-name: 'koa-server'
-          user-email: ${{ secrets.USER_EMAIL }}
-          target-branch: main
+      # 提交并推送到目标仓库
+      - name: Commit and push
+        run: |
+          cd /tmp/deploy/koa-server
+          git add .
+          git commit -m "Deploy: ${{ github.sha }}" || echo "No changes to commit"
+          git push origin main
 
       # 设置 PM2 配置文件
       - name: Create PM2 config
