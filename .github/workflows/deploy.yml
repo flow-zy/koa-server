@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -30,26 +28,11 @@ jobs:
           version: 8
           run_install: false
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
-        run: |
-          pnpm install
+        run: pnpm install
 
       - name: Build
-        run: |
-          pnpm build
+        run: pnpm build
         env:
           NODE_ENV: production
           MYSQL_DB: ${{ secrets.MYSQL_DB }}
@@ -64,11 +47,6 @@ jobs:
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
 
-      - name: Configure Git
-        run: |
-          git config --global user.name "${{ secrets.GIT_USERNAME }}"
-          git config --global user.email "${{ secrets.GIT_EMAIL }}"
-
       - name: Deploy to GitHub Repository
         uses: JamesIves/github-pages-deploy-action@v4
         with:
@@ -77,11 +55,8 @@ jobs:
           branch: master
           folder: dist
           clean: true
-          git-config-name: ${{ secrets.GIT_USERNAME }}
-          git-config-email: ${{ secrets.GIT_EMAIL }}
           commit-message: "Deploy: ${{ github.sha }}"
 
-      # # 配置 SSH
       # - name: Install SSH key
       #   uses: shimataro/ssh-key-action@v2
       #   with:
@@ -89,31 +64,21 @@ jobs:
       #     known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
       #     if_key_exists: replace
 
-      # # 添加服务器到已知主机
-      # - name: Add known hosts
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-
-      # - name: Deploy to server
-      #   env:
-      #     SERVER_HOST: ${{ secrets.SERVER_HOST }}
-      #     SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
-      #     DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      #   run: |
-      #     # 创建部署目录（如果不存在）
-      #     ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
-
-      #     # 复制构建文件到服务器
-      #     scp -o StrictHostKeyChecking=no -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-      #     scp -o StrictHostKeyChecking=no package.json $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-      #     scp -o StrictHostKeyChecking=no pnpm-lock.yaml $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-
-      #     # 在服务器上执行部署命令
-      #     ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
-      #       npm install -g pnpm && \
-      #       pnpm install --production && \
-      #       pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production"
       - name: Deploy to server
+        # env:
+        #   SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        #   SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+        #   DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          pnpm build
+          echo "Deploying to server..."
+          pnpm start
+
+
+        # 部署到服务器
+        # ssh $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
+        # scp -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+        # scp package.json pnpm-lock.yaml $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+        # ssh $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
+        #   npm install -g pnpm && \
+        #   pnpm install --production && \
+        #   pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production"
