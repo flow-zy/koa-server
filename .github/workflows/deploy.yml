@@ -16,9 +16,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -66,27 +63,22 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
 
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          folder: dist
-          branch: gh-pages
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
 
-      - name: Configure Git
-        run: |
-          git config --global user.name "${{ secrets.GIT_USERNAME }}"
-          git config --global user.email "${{ secrets.GIT_EMAIL }}"
-
-      - name: Deploy to target repository
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Deploy to Repository
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          repository-name: flow-zy/koa-server
-          branch: master
-          folder: dist
-          clean: true
+          deploy_key: ${{ secrets.DEPLOY_KEY }}
+          external_repository: flow-zy/koa-server
+          publish_branch: master
+          publish_dir: ./dist
+          allow_empty_commit: true
+          commit_message: "Deploy: ${{ github.sha }}"
 
-      - name: Setup SSH
+      - name: Setup SSH for server deployment
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -98,15 +90,15 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           # 创建部署目录（如果不存在）
-          ssh $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
+          ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
 
           # 复制构建文件到服务器
-          scp -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-          scp package.json $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-          scp pnpm-lock.yaml $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+          scp -o StrictHostKeyChecking=no -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+          scp -o StrictHostKeyChecking=no package.json $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
+          scp -o StrictHostKeyChecking=no pnpm-lock.yaml $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
 
           # 在服务器上执行部署命令
-          ssh $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
+          ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
             npm install -g pnpm && \
             pnpm install --production && \
             pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production"
