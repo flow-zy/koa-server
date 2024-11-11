@@ -24,7 +24,8 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "prod": "pm2 start ecosystem.config.json --env production"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
