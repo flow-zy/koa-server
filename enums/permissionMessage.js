@@ -1,0 +1,26 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PermissionMessage = void 0;
+var PermissionMessage;
+(function (PermissionMessage) {
+    PermissionMessage["CREATE_SUCCESS"] = "\u521B\u5EFA\u6743\u9650\u6210\u529F";
+    PermissionMessage["CREATE_ERROR"] = "\u521B\u5EFA\u6743\u9650\u5931\u8D25";
+    PermissionMessage["UPDATE_SUCCESS"] = "\u66F4\u65B0\u6743\u9650\u6210\u529F";
+    PermissionMessage["UPDATE_ERROR"] = "\u66F4\u65B0\u6743\u9650\u5931\u8D25";
+    PermissionMessage["DELETE_SUCCESS"] = "\u5220\u9664\u6743\u9650\u6210\u529F";
+    PermissionMessage["DELETE_ERROR"] = "\u5220\u9664\u6743\u9650\u5931\u8D25";
+    PermissionMessage["GET_DETAIL_SUCCESS"] = "\u83B7\u53D6\u6743\u9650\u8BE6\u60C5\u6210\u529F";
+    PermissionMessage["GET_DETAIL_ERROR"] = "\u83B7\u53D6\u6743\u9650\u8BE6\u60C5\u5931\u8D25";
+    PermissionMessage["GET_LIST_SUCCESS"] = "\u83B7\u53D6\u6743\u9650\u5217\u8868\u6210\u529F";
+    PermissionMessage["GET_LIST_ERROR"] = "\u83B7\u53D6\u6743\u9650\u5217\u8868\u5931\u8D25";
+    PermissionMessage["NOT_EXIST"] = "\u6743\u9650\u4E0D\u5B58\u5728";
+    PermissionMessage["CODE_EXISTS"] = "\u6743\u9650\u7801\u5DF2\u5B58\u5728";
+    PermissionMessage["INVALID_PARAMS"] = "\u65E0\u6548\u7684\u53C2\u6570";
+    PermissionMessage["NAME_REQUIRED"] = "\u6743\u9650\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A";
+    PermissionMessage["CODE_REQUIRED"] = "\u6743\u9650\u7801\u4E0D\u80FD\u4E3A\u7A7A";
+    PermissionMessage["INVALID_STATUS"] = "\u65E0\u6548\u7684\u72B6\u6001\u503C";
+    PermissionMessage["GET_ALL_SUCCESS"] = "\u83B7\u53D6\u5168\u90E8\u6743\u9650\u6210\u529F";
+    PermissionMessage["GET_ALL_ERROR"] = "\u83B7\u53D6\u5168\u90E8\u6743\u9650\u5931\u8D25";
+    PermissionMessage["UPDATE_STATUS_SUCCESS"] = "\u66F4\u65B0\u6743\u9650\u72B6\u6001\u6210\u529F";
+    PermissionMessage["UPDATE_STATUS_ERROR"] = "\u66F4\u65B0\u6743\u9650\u72B6\u6001\u5931\u8D25";
+})(PermissionMessage || (exports.PermissionMessage = PermissionMessage = {}));
