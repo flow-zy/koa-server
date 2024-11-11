@@ -45,15 +45,6 @@ async function start() {
 	})
 	// 注册全局错误处理中间件（需要放在最前面）
 	app.use(errHandler())
-	// 添加全局异常处理
-	app.use(async (ctx, next) => {
-		try {
-			await next()
-		} catch (error: any) {
-			ctx.status = error.statusCode || 500
-			ctx.body = new Result(500, '全局异常', 'error')
-		}
-	})
 	app.use(loggerMiddleware)
 	// 日志
 	app.use(logger())
@@ -78,7 +69,8 @@ async function start() {
 			multipart: true,
 			formidable: {
 				uploadDir: path.resolve(__dirname, '../static/uploads'),
-				keepExtensions: true
+				keepExtensions: true,
+				maxFileSize: 200 * 1024 * 1024 // 200MB
 			}
 		})
 	)
@@ -102,10 +94,7 @@ async function start() {
 	// 跨域
 	app.use(
 		corsHandler({
-			origins: [
-				'http://localhost:3000',
-				'https://your-production-domain.com'
-			],
+			origins: ['*'],
 			methods: ['GET', 'POST', 'PUT', 'DELETE'],
 			allowHeaders: ['Content-Type', 'Authorization', 'X-Token'],
 			security: true,

@@ -47,5 +47,39 @@ export enum UserMessage {
 	PERMISSION_DENIED = '权限不足',
 	SUPER_EXIT = '超级管理员已存在',
 	LOGOUT_SUCCESS = '退出成功',
-	LOGOUT_ERROR = '退出失败'
+	LOGOUT_ERROR = '退出失败',
+
+	// 个人中心相关
+	GET_PROFILE_ERROR = '获取个人信息失败',
+	UPDATE_PROFILE_SUCCESS = '更新个人信息成功',
+	UPDATE_PROFILE_ERROR = '更新个人信息失败',
+	UPDATE_PASSWORD_SUCCESS = '修改密码成功',
+	UPDATE_PASSWORD_ERROR = '修改密码失败',
+	OLD_PASSWORD_ERROR = '原密码错误',
+	PASSWORD_NOT_MATCH = '两次输入的密码不一致',
+	EMAIL_FORMAT_ERROR = '邮箱格式错误',
+	PHONE_FORMAT_ERROR = '手机号格式错误',
+	AVATAR_UPLOAD_ERROR = '头像上传失败',
+	AVATAR_UPLOAD_SUCCESS = '头像上传成功',
+	AVATAR_SIZE_ERROR = '头像文件大小不能超过2MB',
+	AVATAR_TYPE_ERROR = '只支持 JPG、PNG、GIF 格式的图片',
+	PASSWORD_FORMAT_ERROR = '密码格式错误（至少6位，包含数字和字母）',
+
+	// 部门相关
+	GET_DEPARTMENT_LIST_ERROR = '获取部门列表失败',
+	CREATE_DEPARTMENT_SUCCESS = '创建部门成功',
+	CREATE_DEPARTMENT_ERROR = '创建部门失败',
+	UPDATE_DEPARTMENT_SUCCESS = '更新部门成功',
+	UPDATE_DEPARTMENT_ERROR = '更新部门失败',
+	DELETE_DEPARTMENT_SUCCESS = '删除部门成功',
+	DELETE_DEPARTMENT_ERROR = '删除部门失败',
+	UPDATE_DEPARTMENT_STATUS_SUCCESS = '更新部门状态成功',
+	UPDATE_DEPARTMENT_STATUS_ERROR = '更新部门状态失败',
+	DEPARTMENT_NOT_FOUND = '部门不存在',
+	DEPARTMENT_CODE_EXISTS = '部门编码已存在',
+	PARENT_DEPARTMENT_NOT_FOUND = '父级部门不存在',
+	CANNOT_SET_SELF_AS_PARENT = '不能将自己设为父级部门',
+	CANNOT_SET_CHILD_AS_PARENT = '不能将子部门设为父级部门',
+	DEPARTMENT_HAS_CHILDREN = '该部门下有子部门，不能删除',
+	DEPARTMENT_HAS_USERS = '该部门下有用户，不能删除'
 }

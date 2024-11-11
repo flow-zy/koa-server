@@ -1,95 +1,88 @@
 import {
-  AllowNull,
-  AutoIncrement,
-  BelongsToMany,
-  Column,
-  Comment,
-  DataType,
-  Default,
-  Model,
-  PrimaryKey,
-  Table,
-  Unique,
+	AutoIncrement,
+	BeforeCreate,
+	BeforeUpdate,
+	BelongsTo,
+	BelongsToMany,
+	Column,
+	Comment,
+	DataType,
+	Default,
+	ForeignKey,
+	Model,
+	PrimaryKey,
+	Table
 } from 'sequelize-typescript'
-import bcrypt from 'bcryptjs'
 import RoleModel from './roleModel'
 import RoleUserModel from './roleUserModel'
-import { decrypt } from '../utils/auth'
+import DepartmentModel from './departmentModel'
+import bcrypt from 'bcryptjs'
 
 @Table({ tableName: 'user' })
-export default class User extends Model {
+export default class UserModel extends Model {
 	@PrimaryKey
 	@AutoIncrement
-	@Comment('id')
+	@Comment('ID')
 	@Column(DataType.BIGINT)
-	declare id: number // id
+	declare id: number
 
-	// 用户名
-	@AllowNull(false)
-	@Unique
 	@Comment('用户名')
 	@Column(DataType.STRING)
 	declare username: string
 
-	// 密码
-	@AllowNull(false)
 	@Comment('密码')
 	@Column(DataType.STRING)
 	declare password: string
 
-	// 邮箱
-	@Comment('邮箱')
-	@Column(DataType.STRING)
-	declare email: string
-
-	// 昵称
 	@Comment('昵称')
 	@Column(DataType.STRING)
 	declare nickname: string
 
-	// 手机号
+	@Comment('邮箱')
+	@Column(DataType.STRING)
+	declare email: string
+
 	@Comment('手机号')
 	@Column(DataType.STRING)
 	declare phone: string
 
-	// 头像
 	@Comment('头像')
 	@Column(DataType.STRING)
 	declare avatar: string
 
-	// 性别
+	@Comment('性别：0-未知 1-男 2-女')
 	@Default(0)
-	@Comment('用户性别 0: 未知, 1: 男 2: 女')
 	@Column(DataType.INTEGER)
 	declare gender: number
 
-	// 状态
-	@Comment('用户状态 0:注销1:正常')
+	@Comment('状态：0-禁用 1-启用')
 	@Default(1)
 	@Column(DataType.INTEGER)
 	declare status: number
 
-	// 用户描述
-	@Comment('用户描述')
-	@Column(DataType.STRING)
-	declare description: string
+	// 添加部门关联
+	@ForeignKey(() => DepartmentModel)
+	@Column(DataType.BIGINT)
+	declare department_id: number
 
-	// 排序
-	@Comment('用户排序')
-	@Default(1)
-	@Column(DataType.INTEGER)
-	declare sort: number
-
-	// 最后登录时间
-	@Comment('最后登录时间')
-	@Column(DataType.DATE)
-	declare lastLogin: Date
+	@BelongsTo(() => DepartmentModel)
+	declare department: DepartmentModel
 
 	@BelongsToMany(() => RoleModel, () => RoleUserModel)
-	declare roles: RoleModel
+	declare roles: RoleModel[]
 
 	// 密码验证方法
 	async validatePassword(password: string): Promise<boolean> {
-		return password === decrypt(this.password)
+		return bcrypt.compare(password, this.password)
+	}
+
+	// 密码加密钩子
+	@BeforeCreate
+	@BeforeUpdate
+	static async hashPassword(instance: UserModel) {
+		if (instance.changed('password')) {
+			const salt = await bcrypt.genSalt(10)
+			instance.password = await bcrypt.hash(instance.password, salt)
+		}
 	}
 }

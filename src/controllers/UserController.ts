@@ -15,6 +15,7 @@ import RoleModel from '../model/roleModel'
 import { filterObject } from '../utils/auth'
 import {logger } from '../config/log4js'
 import RoleUserModel from '../model/roleUserModel'
+import { CryptoUtil } from '../utils/cryptoUtil'
 export default class UserController {
 	@request('get', '/user/info/{id}')
 	@summary(['用户信息'])
@@ -84,6 +85,7 @@ export default class UserController {
 		if (!existUser) {
 			return ctx.error(UserMessage.USER_NOT_EXIST)
 		}
+
 		try {
 			const res = await userService.updUserInfo(params)
 			if (!res) return ctx.error(UserMessage.USER_UPD_INFO_ERROR)
@@ -211,6 +213,194 @@ export default class UserController {
 			const error = err as any
 			logger.error(error.message)
 			throw ctx.send(HttpError.HTTP, 500)
+		}
+	}
+
+	@request('get', '/user/profile')
+	@tags(['个人中心'])
+	@summary('获取个人信息')
+	static async getProfile(ctx: Context) {
+		try {
+			const { userId } = ctx.state.user
+			const user = await userService.findById(userId)
+			if (!user) {
+				return ctx.error(UserMessage.USER_NOT_EXIST)
+			}
+
+			const result = {
+				id: user.id,
+				username: user.username,
+				nickname: user.nickname,
+				email: user.email,
+				phone: user.phone,
+				avatar: user.avatar,
+				gender: user.gender,
+				department: user.department,
+				roles: user.roles
+			}
+
+			return ctx.success(result, UserMessage.USER_INFO_SUCCESS)
+		} catch (error) {
+			logger.error('获取个人信息失败:', error)
+			return ctx.error(UserMessage.USER_INFO_ERROR)
+		}
+	}
+
+	@request('put', '/user/profile')
+	@tags(['个人中心'])
+	@summary('更新个人信息')
+	@body({
+		nickname: { type: 'string', required: false },
+		email: { type: 'string', required: false },
+		phone: { type: 'string', required: false },
+		avatar: { type: 'string', required: false },
+		gender: { type: 'number', required: false }
+	})
+	static async updateProfile(ctx: Context) {
+		try {
+			const { userId } = ctx.state.user
+			const updateData = ctx.request.body
+
+			// 邮箱格式验证
+			if (
+				updateData.email &&
+				!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updateData.email)
+			) {
+				return ctx.error(UserMessage.EMAIL_FORMAT_ERROR)
+			}
+
+			// 手机号格式验证
+			if (updateData.phone && !/^1[3-9]\d{9}$/.test(updateData.phone)) {
+				return ctx.error(UserMessage.PHONE_FORMAT_ERROR)
+			}
+
+			const result = await userService.updUserInfo({
+				id: userId,
+				...updateData
+			})
+
+			if (!result) {
+				return ctx.error(UserMessage.USER_UPD_INFO_ERROR)
+			}
+
+			return ctx.success(null, UserMessage.USER_UPD_INFO_SUCCESS)
+		} catch (error) {
+			logger.error('更新个人信息失败:', error)
+			return ctx.error(UserMessage.USER_UPD_INFO_ERROR)
+		}
+	}
+
+	@request('put', '/user/password')
+	@tags(['个人中心'])
+	@summary('修改密码')
+	@body({
+		oldPassword: { type: 'string', required: true },
+		newPassword: { type: 'string', required: true },
+		confirmPassword: { type: 'string', required: true }
+	})
+	static async updatePassword(ctx: Context) {
+		try {
+			const { userId } = ctx.state.user
+			const { oldPassword, newPassword, confirmPassword } =
+				ctx.request.body
+
+			// 参数验证
+			if (
+				!oldPassword?.trim() ||
+				!newPassword?.trim() ||
+				!confirmPassword?.trim()
+			) {
+				return ctx.error(UserMessage.PASSWORD_REQUIRED)
+			}
+
+			// 新密码与确认密码是否一致
+			if (newPassword !== confirmPassword) {
+				return ctx.error(UserMessage.PASSWORD_NOT_MATCH)
+			}
+
+			// 密码格式验证（至少6位，包含数字和字母）
+			if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,20}$/.test(newPassword)) {
+				return ctx.error(UserMessage.PASSWORD_FORMAT_ERROR)
+			}
+
+			// 解密密码
+			const decryptedOldPassword = CryptoUtil.aesDecrypt(oldPassword)
+			const decryptedNewPassword = CryptoUtil.aesDecrypt(newPassword)
+
+			// 验证旧密码
+			const user = await userService.findById(userId)
+			if (!user) {
+				return ctx.error(UserMessage.USER_NOT_EXIST)
+			}
+
+			const isValidOldPassword =
+				await user.validatePassword(decryptedOldPassword)
+			if (!isValidOldPassword) {
+				return ctx.error(UserMessage.OLD_PASSWORD_ERROR)
+			}
+
+			// 更新密码
+			const result = await userService.updPassword({
+				id: userId,
+				password: decryptedNewPassword
+			})
+
+			if (!result) {
+				return ctx.error(UserMessage.USER_PASSWORD_ERROR)
+			}
+
+			return ctx.success(null, UserMessage.USER_PASSWORD_SUCCESS)
+		} catch (error) {
+			logger.error('修改密码失败:', error)
+			return ctx.error(UserMessage.USER_PASSWORD_ERROR)
+		}
+	}
+
+	@request('post', '/user/avatar')
+	@tags(['个人中心'])
+	@summary('更新头像')
+	static async updateAvatar(ctx: Context) {
+		try {
+			const { userId } = ctx.state.user
+			const file = ctx.request.files?.avatar
+
+			if (!file) {
+				return ctx.error(UserMessage.AVATAR_UPLOAD_ERROR)
+			}
+
+			// 验证文件类型
+			const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
+			// @ts-ignore
+			if (!allowedTypes.includes(file.mimetype)) {
+				return ctx.error(UserMessage.AVATAR_TYPE_ERROR)
+			}
+
+			// 验证文件大小（2MB）
+			// @ts-ignore
+			if (file.size > 2 * 1024 * 1024) {
+				return ctx.error(UserMessage.AVATAR_SIZE_ERROR)
+			}
+
+			// 获取文件路径
+			// @ts-ignore
+			const filePath = Array.isArray(file)
+				? file[0].filepath
+				: file.filepath
+
+			// 直接使用 updAvatar 方法
+			const result = await userService.updAvatar(userId, filePath)
+
+			if (!result) {
+				return ctx.error(UserMessage.USER_AVATAR_ERROR)
+			}
+
+			return ctx.success(
+				{ avatarUrl: result },
+				UserMessage.USER_AVATAR_SUCCESS
+			)
+		} catch (error) {
+			logger.error('更新头像失败:', error)
+			return ctx.error(UserMessage.USER_AVATAR_ERROR)
 		}
 	}
 }
