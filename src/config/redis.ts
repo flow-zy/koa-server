@@ -154,3 +154,15 @@ export async function initRedis() {
 		process.exit(1)
 	}
 }
+
+// 添加健康检查方法
+export async function checkRedisHealth() {
+	try {
+		await redis.set('health-check', '1', 10)
+		const result = await redis.get('health-check')
+		return result === '1'
+	} catch (error) {
+		logger.error('Redis health check failed:', error)
+		return false
+	}
+}

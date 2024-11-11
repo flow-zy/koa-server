@@ -27,7 +27,7 @@ interface RegisterParams {
 
 export default class AdminController {
 	@request('get', '/login')
-	@tags(['Admin'])
+	@tags(['管理员'])
 	@summary('管理员登录')
 	@query({
 		username: {
@@ -104,6 +104,7 @@ export default class AdminController {
 	}
 
 	@request('post', '/register')
+	@tags(['管理员'])
 	@summary('管理员注册')
 	@body({
 		username: { type: 'string', required: true, description: '用户名' },
@@ -204,6 +205,7 @@ export default class AdminController {
 	}
 
 	@request('get', '/admin/info')
+	@tags(['管理员'])
 	@summary('获取管理员信息')
 	static async getInfo(ctx: Context) {
 		try {

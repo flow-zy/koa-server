@@ -8,7 +8,7 @@ import { HttpError } from '../enums'
 
 export default class RoleController {
 	@request('get', '/role/list')
-	@tags(['Role'])
+	@tags(['角色管理'])
 	@summary(['获取角色列表'])
 	@query({
 		pagesize: { type: 'number', require: true, description: '每页条数' },
@@ -29,7 +29,7 @@ export default class RoleController {
 	}
 	// 获取全部的角色没有分
 	@request('get', '/role/all')
-	@tags(['Role'])
+	@tags(['角色管理'])
 	@summary(['获取全部的角色'])
 	static async getAllRole(ctx: Context) {
 		try {
@@ -42,7 +42,7 @@ export default class RoleController {
 	}
 
 	@request('post', '/role/add')
-	@tags(['Role'])
+	@tags(['角色管理'])
 	@summary(['添加角色'])
 	static async addRole(ctx: Context) {
 		try {
@@ -56,7 +56,7 @@ export default class RoleController {
 	}
 
 	@request('delete', '/role/delete/{id}')
-	@tags(['Role'])
+	@tags(['角色管理'])
 	@summary(['删除角色'])
 	static async deleteRole(ctx: Context) {
 		try {
@@ -72,7 +72,7 @@ export default class RoleController {
 	}
 
 	@request('put', '/role/update/{id}')
-	@tags(['Role'])
+	@tags(['角色管理'])
 	@summary(['修改角色'])
 	static async updateRole(ctx: Context) {
 		try {
@@ -90,7 +90,7 @@ export default class RoleController {
 	}
 
 	@request('put', '/role/status/{id}')
-	@tags(['Role'])
+	@tags(['角色管理'])
 	@summary('切换角色状态')
 	static async changeStatus(ctx: Context) {
 		try {
@@ -106,7 +106,7 @@ export default class RoleController {
 	}
 
 	@request('get', '/role/detail/{id}')
-	@tags(['Role'])
+	@tags(['角色管理'])
 	@summary(['获取角色详情'])
 	static async getRoleDetail(ctx: Context) {
 		try {

@@ -7,7 +7,7 @@ import { request, summary, tags, path, body } from 'koa-swagger-decorator'
 
 export default class PermissionController {
 	@request('post', '/permission/add')
-	@tags(['Permission'])
+	@tags(['权限管理'])
 	@summary('增加权限')
 	static async create(ctx: Context) {
 		try {
@@ -29,7 +29,7 @@ export default class PermissionController {
 	 * 更新权限
 	 */
 	@request('put', '/permission/update/{id}')
-	@tags(['Permission'])
+	@tags(['权限管理'])
 	@summary('更新权限')
 	static async update(ctx: Context) {
 		try {
@@ -52,7 +52,7 @@ export default class PermissionController {
 	 * 删除权限
 	 */
 	@request('delete', '/permission/delete/{id}')
-	@tags(['Permission'])
+	@tags(['权限管理'])
 	@summary('删除权限')
 	static async delete(ctx: Context) {
 		try {
@@ -69,7 +69,7 @@ export default class PermissionController {
 	 * 获取权限详情
 	 */
 	@request('get', '/permission/detail/{id}')
-	@tags(['Permission'])
+	@tags(['权限管理'])
 	@summary('获取权限详情')
 	static async getDetail(ctx: Context) {
 		try {
@@ -89,7 +89,7 @@ export default class PermissionController {
 	 * 获取权限列表
 	 */
 	@request('get', '/permission/list')
-	@tags(['Permission'])
+	@tags(['权限管理'])
 	@summary('获取权限列表')
 	static async getList(ctx: Context) {
 		try {
@@ -103,7 +103,7 @@ export default class PermissionController {
 	}
 	// 全部权限
 	@request('get', '/permission/all')
-	@tags(['Permission'])
+	@tags(['权限管理'])
 	@summary('获取全部权限')
 	static async getAll(ctx: Context) {
 		try {

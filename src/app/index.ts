@@ -18,7 +18,7 @@ import { deleteStatic, staticInit } from '../utils/Schedule'
 import processEnv, { white_list } from '../config/config.default'
 import { initApp } from '../utils/init'
 import { logger as logger4js } from '../config/log4js'
-import { initRedis } from '../config/redis'
+import { initRedis, checkRedisHealth } from '../config/redis'
 import auth from '../middleware/auth'
 import { createParameterMiddleware } from '../middleware/parameterMiddleware'
 // import sequelize from '../db/index';

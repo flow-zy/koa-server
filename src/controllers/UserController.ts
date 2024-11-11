@@ -19,7 +19,7 @@ import { CryptoUtil } from '../utils/cryptoUtil'
 export default class UserController {
 	@request('get', '/user/info/{id}')
 	@summary(['用户信息'])
-	@tags(['User'])
+	@tags(['用户管理'])
 	static async getInfo(ctx: Context) {
 		const params = ctx.params as unknown as UserModel
 		try {
@@ -34,7 +34,7 @@ export default class UserController {
 
 	@request('put', '/user/status')
 	@summary(['用户状态'])
-	@tags(['User'])
+	@tags(['用户管理'])
 	@query({
 		id: { type: 'number', require: true, description: '用户id' }
 	})
@@ -51,7 +51,7 @@ export default class UserController {
 
 	@request('get', '/user/list')
 	@summary(['用户列表'])
-	@tags(['User'])
+	@tags(['用户管理'])
 	@query({
 		pagesize: { type: 'number', require: true, description: '每页条数' },
 		pagenumber: { type: 'number', require: true, description: '页码' },
@@ -72,7 +72,7 @@ export default class UserController {
 
 	@summary(['修改用户信息'])
 	@request('put', '/user/upd/info')
-	@tags(['User'])
+	@tags(['用户管理'])
 	@body({
 		id: { type: 'number', required: true, description: '用户id' },
 		username: { type: 'string', required: true, description: '用户名' },
@@ -98,7 +98,7 @@ export default class UserController {
 	// 批量删除用户
 	@request('delete', '/user/batch/delete/{ids}')
 	@summary(['批量删除用户'])
-	@tags(['User'])
+	@tags(['用户管理'])
 	static async batchDelete(ctx: Context) {
 		const params = ctx.params as unknown as {
 			ids: string
@@ -116,7 +116,7 @@ export default class UserController {
 	// 给用户增加角色
 	@request('put', '/user/role/{id}')
 	@summary(['用户角色设置'])
-	@tags(['User'])
+	@tags(['用户管理'])
 	@query({
 		roles: {
 			type: 'array<number>',
@@ -144,7 +144,7 @@ export default class UserController {
 	@body({
 		password: { type: 'string', required: true, description: '用户密码' }
 	})
-	@tags(['User'])
+	@tags(['用户管理'])
 	@summary(['重置密码'])
 	static async updPassword(ctx: Context) {
 		const { id = 1 } = ctx.params
@@ -163,7 +163,7 @@ export default class UserController {
 	@body({
 		avatar: { type: 'string', required: true, description: '头像' }
 	})
-	@tags(['User'])
+	@tags(['用户管理'])
 	@summary(['修改用户头像'])
 	static async updAvatar(ctx: Context) {
 		const { id } = ctx.params
@@ -181,7 +181,7 @@ export default class UserController {
 	// 添加用户
 	@request('post', '/user/add')
 	@summary(['添加用户'])
-	@tags(['User'])
+	@tags(['用户管理'])
 	static async addUser(ctx: Context) {
 		const requestBody = ctx.request.body
 		// 参数验证
