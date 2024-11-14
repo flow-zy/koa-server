@@ -9,6 +9,11 @@ import { getLimitAndOffset } from '../utils/util'
 import RoleUserModel from '../model/roleUserModel'
 import { Op } from 'sequelize'
 import { DataUtil } from '../utils/dataUtil'
+import UserModel from '../model/userModel'
+import { UserMessage } from '../enums'
+import { BusinessError } from '../utils/businessError'
+import { DepartmentModel } from '../model'
+import { DateUtil } from '../utils/dateUtil'
 class UserService {
 	async getUserInfo(id: number) {
 		try {
@@ -26,7 +31,7 @@ class UserService {
 					exclude: ['password', 'deleted_at'] // 排除密码字段
 				}
 			})
-
+			console.log(user, 'user')
 			if (!user) return null
 
 			// 使用 DataUtil 处理数据
@@ -86,76 +91,84 @@ class UserService {
 		)
 	}
 	// 查找全部用户列表
-	getAllUser = async (
-		params: Partial<User> & {
-			pagesize: number
-			pagenumber: number
-			startTime: Date
-			endTime: Date
-		}
-	) => {
-		const {
-			pagesize,
-			pagenumber,
-			startTime,
-			endTime,
-			username,
-			..._params
-		} = params
+	async getList(params: {
+		pagenumber?: number
+		pagesize?: number
+		keyword?: string
+		gender?: number
+		status?: number
+		startTime?: string
+		endTime?: string
+	}) {
+		try {
+			const {
+				keyword,
+				status,
+				startTime,
+				endTime,
+				pagenumber = 1,
+				pagesize = 10,
+				gender
+			} = params
+			const where: any = {}
 
-		const { limit, offset } = getLimitAndOffset(pagesize, pagenumber)
-		const options: any = { limit, offset }
+			// 关键字搜索
+			if (keyword) {
+				where[Op.or] = [
+					{ username: { [Op.like]: `%${keyword}%` } },
+					{ nickname: { [Op.like]: `%${keyword}%` } },
+					{ email: { [Op.like]: `%${keyword}%` } }
+				]
+			}
+			if (gender !== undefined) {
+				where.gender = gender
+			}
+			// 状态筛选
+			if (status !== undefined) {
+				console.log(Number(status), 'status')
+				where.status = Number(status)
+			}
 
-		const where: any = { ..._params, status: 1 }
-		// 添加时间范围过滤
-		if (startTime && endTime) {
-			where.created_at = {
-				[Op.between]: [new Date(startTime), new Date(endTime)]
-			}
-		} else if (startTime) {
-			where.created_at = {
-				[Op.gte]: new Date(startTime)
-			}
-		} else if (endTime) {
-			where.created_at = {
-				[Op.lte]: new Date(endTime)
-			}
-		}
-		if (username) where.username = { [Op.like]: `%${username}%` } // 模糊查询
-		if (Object.keys(_params).length > 0) options.where = where
-		const { count, rows } = await userModel.findAndCountAll({
-			...options,
-			order: [['sort', 'DESC']],
-			attributes: {
-				exclude: ['password', 'deleted_at']
-			},
-			include: [
-				{
-					model: RoleModel,
-					attributes: ['id', 'name'],
-					through: { attributes: [] }
+			// 时间范围
+			if (startTime && endTime) {
+				where.created_at = {
+					[Op.between]: [
+						DateUtil.formatDate(new Date(startTime)),
+						DateUtil.formatDate(new Date(endTime))
+					]
 				}
-			]
-		})
-		const list = rows.map((item) => {
-			item = item.toJSON()
-			// @ts-ignore
-			item.avatar = item.avatar?.split(',') || []
-			if (
-				item.roles &&
-				Array.isArray(item.roles) &&
-				item.roles.length === 0
-			) {
-				// @ts-ignore
-				item.roles = null
 			}
-			return item
-		})
-		return {
-			total: count,
-			pagesize: params.pagesize,
-			pagenumber: params.pagenumber,
-			list: list
+
+			const { count, rows } = await UserModel.findAndCountAll({
+				where,
+				include: [
+					{
+						model: DepartmentModel,
+						attributes: ['id', 'name', 'code'],
+						required: false
+					},
+					{
+						model: RoleModel,
+						attributes: ['id', 'name', 'code'],
+						through: { attributes: [] },
+						required: false
+					}
+				],
+				attributes: { exclude: ['password', 'deleted_at'] }, // 排除密码字段
+				order: [['created_at', 'DESC']],
+				offset: (pagenumber * 1 - 1) * pagesize * 1,
+				limit: pagesize * 1
+			})
+			const data = DataUtil.toJSON(rows)
+			return {
+				list: data,
+				total: count,
+				pagenumber: Number(pagenumber),
+				pagesize: Number(pagesize)
+			}
+		} catch (error) {
+			console.error('获取用户列表失败:', error)
+			throw new BusinessError(UserMessage.USER_LIST_ERROR)
 		}
 	}
 	updUserInfo = async (params: User & { roles: number[] }) => {
@@ -194,7 +207,7 @@ class UserService {
 		)
 	}
 	// 修改用户头像
-	updAvatar = async (id: number, avatar: string) => {
+	updAvatar = async (id: string, avatar: string) => {
 		return await userModel.update({ avatar }, { where: { id } })
 	}
 	addUser = async (data: Partial<userModel>) => {
@@ -202,10 +215,7 @@ class UserService {
 			// 设置默认密码
 			data.password = encrypt('123456')
 			const { roles, ...userInfo } = data
-			const users = await userModel.create({
-				...userInfo,
-				avatar: userInfo.avatar?.toString()
-			})
+			const users = await userModel.create(userInfo as UserModel)
 			// @ts-ignore
 			await users.setRoles(roles)
 			users.save()

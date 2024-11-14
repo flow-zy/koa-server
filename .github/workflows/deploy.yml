@@ -4,103 +4,33 @@ on:
   push:
     branches: [ master ]
 
-env:
-  NODE_VERSION: '18.16.1'
-  PORT: 8686
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
+      
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
-
+          node-version: '18.x'
+      
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-
+      
       - name: Install dependencies
         run: pnpm install
-
-      - name: Build
-        run: pnpm build
-        env:
-          NODE_ENV: production
-          MYSQL_DB: ${{ secrets.MYSQL_DB }}
-          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_PWD: ${{ secrets.MYSQL_PWD }}
-          APP_PORT: ${{ env.PORT }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          AES_KEY: ${{ secrets.AES_KEY }}
-          AES_IV: ${{ secrets.AES_IV }}
-          REDIS_HOST: ${{ secrets.REDIS_HOST }}
-          REDIS_PORT: ${{ secrets.REDIS_PORT }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-
-      - name: Start server
-        run: |
-          echo "Starting server..."
-          NODE_ENV=production APP_PORT=${{ env.PORT }} node dist/index.js &
-          echo "Waiting for server to start..."
-          sleep 10
-          echo "Server started"
-
-      - name: Health check
-        run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${{ env.PORT }}/health)
-          if [ "$response" != "200" ]; then
-            echo "Health check failed with status $response"
-            exit 1
-          fi
-          echo "Health check passed"
-
-      - name: Deploy to GitHub Repository
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          token: ${{ secrets.SERVER_TOKEN }}
-          repository-name: flow-zy/koa-server
-          branch: master
-          folder: dist
-          clean: true
-          commit-message: "Deploy: ${{ github.sha }}"
-
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
-          if_key_exists: replace
-
-      - name: Deploy to server
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-        run: |
-          echo "Deploying to server..."
-          ssh $SERVER_USERNAME@$SERVER_HOST "mkdir -p $DEPLOY_PATH"
-          scp -r dist/* $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-          scp package.json pnpm-lock.yaml ecosystem.config.js $SERVER_USERNAME@$SERVER_HOST:$DEPLOY_PATH
-          ssh $SERVER_USERNAME@$SERVER_HOST "cd $DEPLOY_PATH && \
-            npm install -g pnpm && \
-            pnpm install --production && \
-            NODE_ENV=production APP_PORT=${{ env.PORT }} \
-            pm2 reload ecosystem.config.js --env production || \
-            pm2 start ecosystem.config.js --env production"
-          echo "Deployment completed"
-
-      - name: Cleanup
-        if: always()
-        run: |
-          echo "Cleaning up...
+      
+      - name: Build shared packages
+        run: pnpm --filter "@shared/*" build
+      
+      - name: Build client
+        run: pnpm build:client
+      
+      - name: Build server
+        run: pnpm build:server
+      
+      - name: Deploy
+        run: pnpm deploy

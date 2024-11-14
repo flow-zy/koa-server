@@ -1,7 +1,7 @@
 import { Context, Next } from 'koa'
 import { logger } from '../config/log4js'
 import { StatusCode } from '../types/response'
-
+import processEnv from '../config/config.default'
 // 自定义错误类
 export class AppError extends Error {
 	public status: number
@@ -67,6 +67,7 @@ export default function errorHandler() {
 				}
 			}
 		} catch (err) {
+			console.log(err, 'error')
 			const error = err as any
 			// 记录错误日志
 			logger.error('Unhandled Error:', {
@@ -84,7 +85,7 @@ export default function errorHandler() {
 			})
 
 			// 开发环境下打印错误堆栈
-			if (process.env.NODE_ENV === 'development') {
+			if (processEnv.NODE_ENV === 'development') {
 				logger.error('Error Stack:', error.stack)
 			}
 
@@ -121,7 +122,7 @@ export default function errorHandler() {
 				ctx.body = {
 					code: StatusCode.INTERNAL_ERROR,
 					message:
-						process.env.NODE_ENV === 'production'
+						processEnv.NODE_ENV === 'production'
 							? '服务器内部错误'
 							: error.message,
 					timestamp: Date.now()

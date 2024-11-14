@@ -55,14 +55,16 @@ export default class UserController {
 	@query({
 		pagesize: { type: 'number', require: true, description: '每页条数' },
 		pagenumber: { type: 'number', require: true, description: '页码' },
-		username: { type: 'string', require: false },
-		startTime: { type: 'string', require: false },
-		endTime: { type: 'date', require: false }
+		keyword: { type: 'string', require: false, description: '关键词' },
+		status: { type: 'number', require: false, description: '用户状态' },
+		gender: { type: 'number', require: false, description: '性别' },
+		startTime: { type: 'string', require: false, description: '开始时间' },
+		endTime: { type: 'date', require: false, description: '结束时间' }
 	})
 	static async getAllUser(ctx: Context) {
 		const params = ctx.request.query as unknown as any
 		try {
-			const res = await userService.getAllUser(filterObject(params))
+			const res = await userService.getList(params)
 			if (res) return ctx.success(res, UserMessage.USER_LIST_SUCCESS)
 			return ctx.error(UserMessage.USER_LIST_ERROR)
 		} catch (error) {

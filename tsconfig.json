@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "es6",
 		"useDefineForClassFields": true,
-		"emitDecoratorMetadata": true, // 目标js版本
+		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"module": "CommonJS",
 		"moduleResolution": "node",
@@ -12,9 +12,16 @@
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
-		"alwaysStrict": false
+		"alwaysStrict": false,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"]
+		}
 	},
 	"include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js"],
 	"exclude": ["node_modules", "dist", "public"],
-	"ts-node": { "esm": true }
+	"ts-node": {
+		"esm": true,
+		"transpileOnly": true
+	}
 }

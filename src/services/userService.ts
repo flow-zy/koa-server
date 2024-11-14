@@ -1,52 +1,93 @@
-import { BaseDao, QueryParams } from '../dao/baseDao'
-import UserModel from '../model/userModel'
+import { UserModel, DepartmentModel, RoleModel } from '../model'
 import { Op } from 'sequelize'
+import { BusinessError } from '../utils/businessError'
 import { DateUtil } from '../utils/dateUtil'
-
+import { BaseDao } from '../dao/baseDao'
+import { UserMessage } from '../enums/user'
 export class UserService {
 	/**
 	 * 获取用户列表
 	 */
-	async getList(
-		params: QueryParams & {
-			keyword?: string
-			status?: number
-			startTime?: string
-			endTime?: string
-		}
-	) {
-		const { keyword, status, startTime, endTime, ...restParams } = params
+	async getList(params: {
+		pagenumber?: number
+		pagesize?: number
+		keyword?: string
+		gender?: number
+		status?: number
+		startTime?: string
+		endTime?: string
+	}) {
+		try {
+			const {
+				keyword,
+				status,
+				startTime,
+				endTime,
+				pagenumber = 1,
+				pagesize = 10,
+				gender
+			} = params
+			console.log(params, 'params')
+			const where: any = {}
 
-		const queryParams: QueryParams = {
-			...restParams,
-			where: {
-				...(keyword && {
-					[Op.or]: [
-						{ username: { [Op.like]: `%${keyword}%` } },
-						{ email: { [Op.like]: `%${keyword}%` } },
-						{ nickname: { [Op.like]: `%${keyword}%` } }
+			// 关键字搜索
+			if (keyword) {
+				where[Op.or] = [
+					{ username: { [Op.like]: `%${keyword}%` } },
+					{ nickname: { [Op.like]: `%${keyword}%` } },
+					{ email: { [Op.like]: `%${keyword}%` } }
+				]
+			}
+			if (gender !== undefined) {
+				where.gender = gender
+			}
+			// 状态筛选
+			if (status !== undefined) {
+				console.log(Number(status), 'status')
+				where.status = Number(status)
+			}
+
+			// 时间范围
+			if (startTime && endTime) {
+				where.created_at = {
+					[Op.between]: [
+						DateUtil.formatDate(new Date(startTime)),
+						DateUtil.formatDate(new Date(endTime))
 					]
-				}),
-				...(status !== undefined && { status }),
-				...(startTime &&
-					endTime && {
-						created_at: {
-							[Op.between]: [
-								DateUtil.formatDate(new Date(startTime)),
-								DateUtil.formatDate(new Date(endTime))
-							]
-						}
-					})
-			},
-			include: [
-				{
-					association: 'roles',
-					attributes: ['id', 'name', 'nickname']
 				}
-			]
-		}
+			}
 
-		return await BaseDao.findByPage(UserModel, queryParams)
+			const { count, rows } = await UserModel.findAndCountAll({
+				where,
+				include: [
+					{
+						model: DepartmentModel,
+						attributes: ['id', 'name', 'code'],
+						required: false
+					},
+					{
+						model: RoleModel,
+						attributes: ['id', 'name', 'code'],
+						through: { attributes: [] },
+						required: false
+					}
+				],
+				attributes: { exclude: ['password'] }, // 排除密码字段
+				order: [['created_at', 'DESC']],
+				offset: (pagenumber - 1) * pagesize,
+				limit: pagesize
+			})
+
+			return {
+				list: rows,
+				total: count,
+				pagenumber: Number(pagenumber),
+				pagesize: Number(pagesize)
+			}
+		} catch (error) {
+			console.error('获取用户列表失败:', error)
+			throw new BusinessError(UserMessage.USER_LIST_ERROR)
+		}
 	}
 
 	/**
@@ -74,13 +115,50 @@ export class UserService {
 	 * 获取用户详情
 	 */
 	async getDetail(id: number) {
-		return await BaseDao.findById(UserModel, id, {
+		try {
+			const user = await UserModel.findByPk(id, {
+				include: [
+					{
+						model: DepartmentModel,
+						attributes: ['id', 'name', 'code']
+					},
+					{
+						model: RoleModel,
+						attributes: ['id', 'name', 'code'],
+						through: { attributes: [] }
+					}
+				],
+				attributes: { exclude: ['password'] }
+			})
+
+			if (!user) {
+				throw new BusinessError('用户不存在')
+			}
+
+			return user
+		} catch (error) {
+			if (error instanceof BusinessError) {
+				throw error
+			}
+			throw new BusinessError('获取用户详情失败')
+		}
+	}
+
+	/**
+	 * 根据用户名查找用户
+	 */
+	async findByUsername(username: string) {
+		return await UserModel.findOne({
+			where: { username },
 			include: [
 				{
-					association: 'roles',
-					attributes: ['id', 'name']
+					model: DepartmentModel,
+					as: 'department',
+					attributes: ['id', 'name', 'code']
 				}
 			]
 		})
 	}
 }
+
+export const userService = new UserService()

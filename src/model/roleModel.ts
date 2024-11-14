@@ -33,9 +33,13 @@ export default class RoleModel extends Model {
 	@Column(DataType.STRING(30))
 	declare nickname: string
 
+	@Comment('角色编码')
+	@Column(DataType.STRING(30))
+	declare code: string
+
 	@Comment('角色描述')
 	@Column(DataType.STRING(30))
-	declare description: string
+	declare remark: string
 
 	@Comment('角色状态')
 	@Default(1)

@@ -1,6 +1,6 @@
 import { Context, Next } from 'koa'
 import { logger } from '../config/log4js'
-
+import processEnv from '../config/config.default'
 interface FilterOptions {
 	removeEmpty: boolean
 	trimStrings: boolean
@@ -66,7 +66,7 @@ export const createParameterMiddleware = (
 			}
 
 			// 开发环境下记录处理后的参数
-			if (process.env.NODE_ENV !== 'production') {
+			if (processEnv.NODE_ENV !== 'production') {
 				logger.debug('处理后的请求参数:', {
 					method: ctx.method,
 					url: ctx.url,
@@ -90,7 +90,7 @@ export const createParameterMiddleware = (
 				code: 500,
 				message: '请求参数处理错误',
 				error:
-					process.env.NODE_ENV === 'development'
+					processEnv.NODE_ENV === 'development'
 						? error instanceof Error
 							? error.message
 							: '未知错误'

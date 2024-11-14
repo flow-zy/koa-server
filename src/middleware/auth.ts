@@ -30,11 +30,11 @@ interface AuthOptions {
 
 export const defaultOptions: AuthOptions = {
 	jwt: {
-		secret: process.env.JWT_SECRET || 'your-secret-key',
+		secret: process.env.JWT_SECRET || 'secret-key',
 		expiresIn: '3h',
 		refreshExpiresIn: '7d',
-		issuer: 'your-app-name',
-		audience: 'your-app-users'
+		issuer: 'app-name',
+		audience: 'app-users'
 	},
 	whitelist: [
 		/^\/static/,

@@ -6,6 +6,8 @@ import processEnv from '../config/config.default'
 import RoleModel from '../model/roleModel'
 import { logger } from '../config/log4js'
 import { DateUtil } from '../utils/dateUtil'
+import models from '../model'
+import { initService } from '../services/initService'
 const {
 	MYSQL_DB,
 	MYSQL_HOST,
@@ -25,10 +27,7 @@ const sequelize =
 			new Sequelize(MYSQL_DB as string, MYSQL_USER as string, MYSQL_PWD, {
 				host: MYSQL_HOST,
 				dialect: 'mysql',
-				models: [
-					`${path.resolve(__dirname, '../model')}/*.ts`,
-					`${path.resolve(__dirname, '../model')}/*.js`
-				], // 数据库模板存放地址
+				models: models, // 数据库模板存放地址
 				define: {
 					freezeTableName: false, // sequelize会给表名自动添加为复数，
 					timestamps: true, // 开启时间戳 create_at delete_at update_at
@@ -48,10 +47,7 @@ const sequelize =
 				{
 					host: MYSQL_SERVICE_HOST,
 					dialect: 'mysql',
-					models: [
-						`${path.resolve(__dirname, '../model')}/*.ts`,
-						`${path.resolve(__dirname, '../model')}/*.js`
-					], // 数据库模板存放地址
+					models, // 数据库模板存放地址
 					define: {
 						freezeTableName: false, // sequelize会给表名自动添加为复数，
 						timestamps: true, // 开启时间戳 create_at delete_at update_at
@@ -79,7 +75,7 @@ export function db() {
 	sequelize
 		.authenticate()
 		.then(async () => {
-			await sequelize.sync()
+			await sequelize.sync({ force: true })
 			// const initRole = [
 			// 	{
 			// 		name: '超级管理员',
@@ -102,6 +98,7 @@ export function db() {
 			// }
 			// await RoleModel.bulkCreate(initRole, { ignoreDuplicates: true })
 			console.log('数据库连接成功')
+			initService.initAll()
 		})
 		.catch((err: any) => {
 			console.log('数据库连接失败', err)

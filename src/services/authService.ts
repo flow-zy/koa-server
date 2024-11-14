@@ -7,7 +7,10 @@ import { DataUtil } from '../utils/dataUtil'
 class AuthService {
 	async findByUsername(username: string): Promise<UserModel | null> {
 		return UserModel.findOne({
-			where: { username }
+			where: { username },
+			attributes: {
+				exclude: ['department_id']
+			}
 		})
 	}
 
@@ -102,14 +105,7 @@ class AuthService {
 			.sort((a, b) => a.sort - b.sort)
 	}
 
-	async create(userData: {
-		username: string
-		password: string
-		email?: string
-		phone?: string
-		nickname?: string
-		roles: number[]
-	}): Promise<UserModel> {
+	async create(userData: UserModel): Promise<UserModel> {
 		return UserModel.create(userData)
 	}
 }

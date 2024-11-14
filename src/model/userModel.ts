@@ -1,25 +1,26 @@
 import {
 	AutoIncrement,
-	BeforeCreate,
-	BeforeUpdate,
 	BelongsTo,
-	BelongsToMany,
 	Column,
 	Comment,
 	DataType,
 	Default,
-	ForeignKey,
 	Model,
 	PrimaryKey,
-	Table
+	Table,
+	ForeignKey,
+	BeforeCreate,
+	BeforeUpdate,
+	BelongsToMany
 } from 'sequelize-typescript'
+import bcrypt from 'bcryptjs'
+import UserDepartModel from './userDepartModel'
+import DepartmentModel from './departmentModel'
 import RoleModel from './roleModel'
 import RoleUserModel from './roleUserModel'
-import DepartmentModel from './departmentModel'
-import bcrypt from 'bcryptjs'
-
+import { CryptoUtil } from '../utils/cryptoUtil'
 @Table({ tableName: 'user' })
-export default class UserModel extends Model {
+class UserModel extends Model<UserModel> {
 	@PrimaryKey
 	@AutoIncrement
 	@Comment('ID')
@@ -46,43 +47,56 @@ export default class UserModel extends Model {
 	@Column(DataType.STRING)
 	declare phone: string
 
+	@Comment('性别：0-女 1-男 2-未知')
+	@Default(2)
+	@Column(DataType.INTEGER)
+	declare gender: number
+
 	@Comment('头像')
 	@Column(DataType.STRING)
 	declare avatar: string
-
-	@Comment('性别：0-未知 1-男 2-女')
-	@Default(0)
-	@Column(DataType.INTEGER)
-	declare gender: number
 
 	@Comment('状态：0-禁用 1-启用')
 	@Default(1)
 	@Column(DataType.INTEGER)
 	declare status: number
 
-	// 添加部门关联
+	@Comment('排序')
+	@Default(0)
+	@Column(DataType.INTEGER)
+	declare sort: number
+
 	@ForeignKey(() => DepartmentModel)
-	@Column(DataType.BIGINT)
-	declare department_id: number
+	@Column({
+		type: DataType.BIGINT,
+		allowNull: true,
+		field: 'department_id'
+	})
+	declare departmentId: number
 
 	@BelongsTo(() => DepartmentModel)
 	declare department: DepartmentModel
 
-	@BelongsToMany(() => RoleModel, () => RoleUserModel)
-	declare roles: RoleModel[]
-
 	// 密码验证方法
-	async validatePassword(password: string): Promise<boolean> {
-		return bcrypt.compare(password, this.password)
+	async validatePassword(inputPassword: string): Promise<boolean> {
+		console.log(this.password, 'this.password', inputPassword)
+		// 直接比较加密后的密码
+		return this.password === inputPassword
 	}
 
-	// 密码加密钩子
+	// 密码处理钩子
 	@BeforeCreate
 	@BeforeUpdate
-	static async hashPassword(instance: UserModel) {
+	static async processPassword(instance: UserModel) {
+		// 只在密码被修改时处理
 		if (instance.changed('password')) {
-			const salt = await bcrypt.genSalt(10)
-			instance.password = await bcrypt.hash(instance.password, salt)
+			// 这里不需要额外加密，因为传入的密码已经是加密过的
+			instance.password = instance.password
 		}
 	}
+
+	@BelongsToMany(() => RoleModel, () => RoleUserModel)
+	declare roles: RoleModel[]
 }
+
+export default UserModel

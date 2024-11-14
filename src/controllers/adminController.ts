@@ -7,6 +7,7 @@ import { generateToken, defaultOptions } from '../middleware/auth'
 import { logger } from '../config/log4js'
 import { UserMessage } from '../enums'
 import { CryptoUtil } from '../utils/cryptoUtil'
+import UserModel from '../model/userModel'
 
 // 登录参数验证
 interface LoginParams {
@@ -15,14 +16,8 @@ interface LoginParams {
 }
 
 // 注册参数验证
-interface RegisterParams {
-	username: string
-	password: string
+interface RegisterParams extends UserModel {
 	confirmPassword: string
-	email?: string
-	phone?: string
-	nickname?: string
-	roles: number[]
 }
 
 export default class AdminController {
@@ -52,9 +47,6 @@ export default class AdminController {
 				AuthMessage.PASSWORD_REQUIRED
 			)
 
-			// 解密前端传来的密码
-			const decryptedPassword = CryptoUtil.aesDecrypt(password)
-
 			// 查找用户
 			const user = await userService.findByUsername(username)
 			if (!user) {
@@ -62,7 +54,7 @@ export default class AdminController {
 			}
 
 			// 验证密码 - 使用解密后的密码进行验证
-			const isValid = await user?.validatePassword(decryptedPassword)
+			const isValid = await user?.validatePassword(password)
 			if (!isValid) {
 				ErrorUtil.throw(AuthMessage.PASSWORD_ERROR)
 			}
@@ -178,7 +170,7 @@ export default class AdminController {
 			}
 			const { confirmPassword, ...userInfo } = params
 			// 创建用户
-			const user = await userService.create(userInfo)
+			const user = await userService.create(userInfo as UserModel)
 			// 返回结果
 			const result = {
 				userInfo: user
@@ -190,7 +182,7 @@ export default class AdminController {
 				ip: ctx.ip
 			})
 
-			return ctx.success(result, AuthMessage.REGISTER_SUCCESS)
+			return ctx.success(null, AuthMessage.REGISTER_SUCCESS)
 		} catch (err) {
 			const error = err as any
 			// 记录失败日志

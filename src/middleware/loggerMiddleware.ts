@@ -54,11 +54,6 @@ export const loggerMiddleware = async (ctx: Context, next: Next) => {
 		}
 
 		logger.info('API Response:', responseLog)
-		// if(ctx.url)
-		console.log(
-			ApiActions[apipath as keyof typeof ApiActions],
-			'防水等级flak京东方'
-		)
 		await Log.create({
 			username: ctx.state.user?.username,
 			ip: ctx.ip,

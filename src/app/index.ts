@@ -77,13 +77,13 @@ async function start() {
 	// 可以通过路径访问静态资源
 	app.use(koaStatic(path.resolve(__dirname, '../static')))
 	app.use(send())
-	app.use(
-		jwt({
-			secret: processEnv.JWT_SECRET!
-		}).unless({
-			path: white_list
-		})
-	)
+	// app.use(
+	// 	jwt({
+	// 		secret: processEnv.JWT_SECRET!
+	// 	}).unless({
+	// 		path: white_list
+	// 	})
+	// )
 
 	// 注册参数处理中间件（要在路由中间件之前）
 	app.use(parameterMiddleware)
