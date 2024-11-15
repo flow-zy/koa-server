@@ -1,12 +1,14 @@
 import { Context, Next } from 'koa'
 import { logger } from '../config/log4js'
 import processEnv from '../config/config.default'
+
 interface FilterOptions {
 	removeEmpty: boolean
 	trimStrings: boolean
 	removeUndefined: boolean
 	removeNull: boolean
 	customFilters: string[]
+	numberFields: string[]
 }
 
 const DEFAULT_OPTIONS: FilterOptions = {
@@ -14,13 +16,22 @@ const DEFAULT_OPTIONS: FilterOptions = {
 	trimStrings: true,
 	removeUndefined: true,
 	removeNull: true,
-	customFilters: ['_t']
+	customFilters: ['_t'],
+	numberFields: ['id', 'pagenumber', 'pagesize', 'status']
 }
 
 export const createParameterMiddleware = (
 	options: Partial<FilterOptions> = {}
 ) => {
 	const finalOptions: FilterOptions = { ...DEFAULT_OPTIONS, ...options }
+
+	const toNumber = (value: any): number | null => {
+		if (value === '' || value === null || value === undefined) {
+			return null
+		}
+		const num = Number(value)
+		return isNaN(num) ? null : num
+	}
 
 	return async (ctx: Context, next: Next) => {
 		try {
@@ -34,7 +45,18 @@ export const createParameterMiddleware = (
 						value !== null &&
 						value !== ''
 					) {
-						filteredQuery[key] = value
+						if (
+							finalOptions.numberFields.includes(
+								key.toLowerCase()
+							)
+						) {
+							const numValue = toNumber(value)
+							if (numValue !== null) {
+								filteredQuery[key] = numValue
+							}
+						} else {
+							filteredQuery[key] = value
+						}
 					}
 				})
 				ctx.query = filteredQuery
@@ -58,7 +80,18 @@ export const createParameterMiddleware = (
 							value !== null &&
 							value !== ''
 						) {
-							filteredBody[key] = value
+							if (
+								finalOptions.numberFields.includes(
+									key.toLowerCase()
+								)
+							) {
+								const numValue = toNumber(value)
+								if (numValue !== null) {
+									filteredBody[key] = numValue
+								}
+							} else {
+								filteredBody[key] = value
+							}
 						}
 					}
 				})

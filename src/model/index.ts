@@ -13,7 +13,7 @@ import RolePermissionModel from './rolePermissionModel'
 import RoleUserModel from './roleUserModel'
 import UserDepartModel from './userDepartModel'
 import UserModel from './userModel'
-
+import NotificationModel from './notificationModel'
 export default [
 	UserModel,
 	DepartmentModel,
@@ -28,7 +28,8 @@ export default [
 	FileModel,
 	LogModel,
 	MonitorModel,
-	NoticeModel
+	NoticeModel,
+	NotificationModel
 ]
 
 export { UserModel, DepartmentModel, RoleModel, UserDepartModel }

@@ -2,20 +2,21 @@ import { Context, Next } from 'koa'
 import { verifyToken, defaultOptions } from './auth'
 import { BusinessError } from '../utils/businessError'
 import { logger } from '../config/log4js'
+import { AuthMessage } from '../enums/auth'
 
 export default async function authMiddleware(ctx: Context, next: Next) {
 	try {
 		const token = ctx.headers.authorization?.split(' ')[1]
 
 		if (!token) {
-			throw new BusinessError('未登录或token已过期')
+			throw new BusinessError(AuthMessage.TOKEN_EXPIRED)
 		}
 
 		try {
 			const decoded = verifyToken(token, defaultOptions)
 			ctx.state.user = decoded
 		} catch (error) {
-			throw new BusinessError('token验证失败')
+			throw new BusinessError(AuthMessage.AUTH_FAILED)
 		}
 
 		await next()

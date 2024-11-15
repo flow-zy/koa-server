@@ -26,6 +26,10 @@ export default class MenuModel extends Model {
 	@Column(DataType.STRING(50))
 	declare name: string
 
+	@Comment('菜单编码')
+	@Column(DataType.STRING(50))
+	declare code: string
+
 	@Comment('菜单路劲')
 	@Column(DataType.STRING(50))
 	declare path: string

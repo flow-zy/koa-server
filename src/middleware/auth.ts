@@ -167,7 +167,7 @@ function getTokenFromRequest(
 // 验证令牌
 export async function verifyToken(
 	token: string,
-	options: AuthOptions
+	options: AuthOptions = defaultOptions
 ): Promise<any> {
 	return new Promise((resolve) => {
 		jwt.verify(

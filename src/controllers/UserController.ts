@@ -2,6 +2,7 @@ import { Context } from 'koa'
 import {
 	body,
 	params,
+	path,
 	query,
 	request,
 	summary,
@@ -13,33 +14,40 @@ import UserModel from '../model/userModel'
 import { HttpError, UserMessage } from '../enums'
 import RoleModel from '../model/roleModel'
 import { filterObject } from '../utils/auth'
-import {logger } from '../config/log4js'
+import { logger } from '../config/log4js'
 import RoleUserModel from '../model/roleUserModel'
 import { CryptoUtil } from '../utils/cryptoUtil'
+import { BusinessError } from '../middleware/errHandler'
 export default class UserController {
 	@request('get', '/user/info/{id}')
 	@summary(['用户信息'])
+	@path({
+		id: { type: 'number', required: true, description: '用户ID' }
+	})
 	@tags(['用户管理'])
 	static async getInfo(ctx: Context) {
-		const params = ctx.params as unknown as UserModel
 		try {
-			let res = await userService.getUserInfo(params.id)
-			if (Object.keys(res).length <= 0)
-				return ctx.error(UserMessage.USER_NOT_EXIST)
-			return ctx.success(res, UserMessage.USER_INFO_SUCCESS)
+			const { id } = ctx.params
+			const result = await userService.getUserInfo(Number(id))
+			return ctx.success(result, UserMessage.USER_INFO_SUCCESS)
 		} catch (error) {
-			throw ctx.error(HttpError.HTTP)
+			logger.error('获取用户信息失败:', error)
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_INFO_ERROR)
 		}
 	}
 
-	@request('put', '/user/status')
+	@request('put', '/user/status/{id}')
 	@summary(['用户状态'])
 	@tags(['用户管理'])
-	@query({
-		id: { type: 'number', require: true, description: '用户id' }
+	@path({
+		id: { type: 'number', required: true, description: '用户ID' }
 	})
 	static async updateStatus(ctx: Context) {
-		const params = ctx.request.body as unknown as UserModel
+		const params = ctx.params as unknown as UserModel
+		console.log(params)
 		try {
 			const res = await userService.updStatus(params.id)
 			if (!res) return ctx.error(UserMessage.USER_STATUS_ERROR)
@@ -79,7 +87,19 @@ export default class UserController {
 		id: { type: 'number', required: true, description: '用户id' },
 		username: { type: 'string', required: true, description: '用户名' },
 		gender: { type: 'number', required: false, description: '性别' },
-		roles: { type: 'array<number>', required: false, description: '角色' }
+		roles: { type: 'array<number>', required: false, description: '角色' },
+		departmentId: {
+			type: 'number',
+			required: false,
+			description: '部门ID'
+		},
+		nickname: { type: 'string', required: false, description: '昵称' },
+		email: { type: 'string', required: false, description: '邮箱' },
+		phone: { type: 'string', required: false, description: '手机号' },
+		avatar: { type: 'string', required: false, description: '头像' },
+		remark: { type: 'string', required: false, description: '备注' },
+		sort: { type: 'number', required: false, description: '排序' },
+		status: { type: 'number', required: false, description: '状态' }
 	})
 	static async updUserInfo(ctx: Context) {
 		const params = ctx.request.body as UserModel & { roles: number[] }
@@ -101,6 +121,9 @@ export default class UserController {
 	@request('delete', '/user/batch/delete/{ids}')
 	@summary(['批量删除用户'])
 	@tags(['用户管理'])
+	@path({
+		ids: { type: 'array<number>', required: true, description: '用户ID' }
+	})
 	static async batchDelete(ctx: Context) {
 		const params = ctx.params as unknown as {
 			ids: string
@@ -119,6 +142,9 @@ export default class UserController {
 	@request('put', '/user/role/{id}')
 	@summary(['用户角色设置'])
 	@tags(['用户管理'])
+	@path({
+		id: { type: 'number', required: true, description: '用户ID' }
+	})
 	@query({
 		roles: {
 			type: 'array<number>',
@@ -144,14 +170,26 @@ export default class UserController {
 	// 重置密码
 	@request('put', '/user/updpwd/{id}')
 	@body({
-		password: { type: 'string', required: true, description: '用户密码' }
+		password: { type: 'string', required: true, description: '用户密码' },
+		confirmPassword: {
+			type: 'string',
+			required: true,
+			description: '确认密码'
+		}
 	})
 	@tags(['用户管理'])
 	@summary(['重置密码'])
 	static async updPassword(ctx: Context) {
-		const { id = 1 } = ctx.params
-		const { password = '' } = ctx.request.body
+		const { id } = ctx.params
+		const { password = '', confirmPassword = '' } = ctx.request.body
 		try {
+			// 校验新密码与旧密码是否一致
+			const user = await userService.findById(id)
+			if (!user) return ctx.error(UserMessage.USER_NOT_EXIST)
+			if (password === user.password)
+				return ctx.error(UserMessage.NEW_PASSWORD_NOT_MATCH)
+			if (password !== confirmPassword)
+				return ctx.error(UserMessage.PASSWORD_NOT_MATCH)
 			const res = await userService.updPassword({ id, password })
 			if (!res) return ctx.error(UserMessage.USER_PASSWORD_ERROR)
 			return ctx.success(null, UserMessage.USER_PASSWORD_SUCCESS)
@@ -162,6 +200,9 @@ export default class UserController {
 
 	// 修改用户头像
 	@request('put', '/user/avatar/{id}')
+	@path({
+		id: { type: 'number', required: true, description: '用户ID' }
+	})
 	@body({
 		avatar: { type: 'string', required: true, description: '头像' }
 	})
@@ -184,6 +225,22 @@ export default class UserController {
 	@request('post', '/user/add')
 	@summary(['添加用户'])
 	@tags(['用户管理'])
+	@body({
+		username: { type: 'string', required: true, description: '用户名' },
+		nickname: { type: 'string', required: false, description: '昵称' },
+		email: { type: 'string', required: false, description: '邮箱' },
+		phone: { type: 'string', required: false, description: '手机号' },
+		roles: { type: 'array<number>', required: false, description: '角色' },
+		departmentId: {
+			type: 'number',
+			required: true,
+			description: '部门ID'
+		},
+		avatar: { type: 'string', required: false, description: '头像' },
+		remark: { type: 'string', required: false, description: '备注' },
+		sort: { type: 'number', required: false, description: '排序' },
+		status: { type: 'number', required: false, description: '状态' }
+	})
 	static async addUser(ctx: Context) {
 		const requestBody = ctx.request.body
 		// 参数验证
@@ -256,7 +313,9 @@ export default class UserController {
 		email: { type: 'string', required: false },
 		phone: { type: 'string', required: false },
 		avatar: { type: 'string', required: false },
-		gender: { type: 'number', required: false }
+		gender: { type: 'number', required: false },
+		remark: { type: 'string', required: false },
+		username: { type: 'string', required: false }
 	})
 	static async updateProfile(ctx: Context) {
 		try {
@@ -326,7 +385,6 @@ export default class UserController {
 			}
 
 			// 解密密码
-			const decryptedOldPassword = CryptoUtil.aesDecrypt(oldPassword)
 			const decryptedNewPassword = CryptoUtil.aesDecrypt(newPassword)
 
 			// 验证旧密码
@@ -334,9 +392,7 @@ export default class UserController {
 			if (!user) {
 				return ctx.error(UserMessage.USER_NOT_EXIST)
 			}
-
-			const isValidOldPassword =
-				await user.validatePassword(decryptedOldPassword)
+			const isValidOldPassword = oldPassword ===user.password
 			if (!isValidOldPassword) {
 				return ctx.error(UserMessage.OLD_PASSWORD_ERROR)
 			}
@@ -346,7 +402,6 @@ export default class UserController {
 				id: userId,
 				password: decryptedNewPassword
 			})
-
 			if (!result) {
 				return ctx.error(UserMessage.USER_PASSWORD_ERROR)
 			}
@@ -358,46 +413,28 @@ export default class UserController {
 		}
 	}
 
-	@request('post', '/user/avatar')
+	@request('put', '/user/avatar')
 	@tags(['个人中心'])
 	@summary('更新头像')
+	@body({
+		avatar: { type: 'string', required: true, description: '头像' }
+	})
 	static async updateAvatar(ctx: Context) {
 		try {
 			const { userId } = ctx.state.user
-			const file = ctx.request.files?.avatar
+			const file = ctx.request.body?.avatar
 
 			if (!file) {
 				return ctx.error(UserMessage.AVATAR_UPLOAD_ERROR)
 			}
-
-			// 验证文件类型
-			const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
-			// @ts-ignore
-			if (!allowedTypes.includes(file.mimetype)) {
-				return ctx.error(UserMessage.AVATAR_TYPE_ERROR)
-			}
-
-			// 验证文件大小（2MB）
-			// @ts-ignore
-			if (file.size > 2 * 1024 * 1024) {
-				return ctx.error(UserMessage.AVATAR_SIZE_ERROR)
-			}
-
-			// 获取文件路径
-			// @ts-ignore
-			const filePath = Array.isArray(file)
-				? file[0].filepath
-				: file.filepath
-
 			// 直接使用 updAvatar 方法
-			const result = await userService.updAvatar(userId, filePath)
+			const result = await userService.updAvatar(userId, file)
 
 			if (!result) {
 				return ctx.error(UserMessage.USER_AVATAR_ERROR)
 			}
 
-			return ctx.success(
-				{ avatarUrl: result },
+			return ctx.success(null,
 				UserMessage.USER_AVATAR_SUCCESS
 			)
 		} catch (error) {

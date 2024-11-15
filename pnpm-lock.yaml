@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@bin/flockmaster-blogs-service':
-        specifier: 'link:'
-        version: 'link:'
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
@@ -62,6 +59,9 @@ importers:
       koa-swagger-decorator:
         specifier: ^1.8.7
         version: 1.8.7(@types/koa@2.15.0)
+      koa-websocket:
+        specifier: ^7.0.0
+        version: 7.0.0
       koa2-cors:
         specifier: ^2.0.6
         version: 2.0.6
@@ -104,6 +104,9 @@ importers:
       uid:
         specifier: ^2.0.2
         version: 2.0.2
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^3.8.0
@@ -135,6 +138,9 @@ importers:
       '@types/koa-static':
         specifier: ^4.0.4
         version: 4.0.4
+      '@types/koa-websocket':
+        specifier: ^5.0.10
+        version: 5.0.10
       '@types/koa2-cors':
         specifier: ^2.0.2
         version: 2.0.5
@@ -150,6 +156,9 @@ importers:
       '@types/validator':
         specifier: ^13.7.17
         version: 13.12.2
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.5.13
       commitizen:
         specifier: ^4.3.0
         version: 4.3.1(@types/node@20.16.13)(typescript@5.6.3)
@@ -628,6 +637,9 @@ packages:
   '@types/koa-static@4.0.4':
     resolution: {integrity: sha512-j1AUzzl7eJYEk9g01hNTlhmipFh8RFbOQmaMNLvLcNNAkPw0bdTs3XTa3V045XFlrWN0QYnblbDJv2RzawTn6A==}
 
+  '@types/koa-websocket@5.0.10':
+    resolution: {integrity: sha512-yaqbFuyrw4eFchCHdOiyF1uhSe0nRv6xFAvVlxoG8Fq2/h+0IDjka3DyN2hJt29m6jr3+nlgsPTGh/Hd/tZmIg==}
+
   '@types/koa2-cors@2.0.5':
     resolution: {integrity: sha512-MrZ8NpnkPYQqTRy2Llflt2f2sLTQTSy5fAOa2YTxUu6UJZXdsY6cszpzuB9EhkAFXJL1D8kEEHGq4Q7rU+jEAg==}
 
@@ -690,6 +702,9 @@ packages:
 
   '@types/validator@13.12.2':
     resolution: {integrity: sha512-6SlHBzUW8Jhf3liqrGGXyTJSIFe4nqlJ5A5KaMZ2l/vbM3Wh3KSybots/wfWVzNLK4D1NZluDlSQIbIEPx6oyA==}
+
+  '@types/ws@8.5.13':
+    resolution: {integrity: sha512-osM/gWBTPKgHV8XkTunnegTRIsvF6owmf5w+JtAfOw472dptdm0dlGv4xCt6GwQRcC2XVOvvRE/0bAoQcL2QkA==}
 
   '@typescript-eslint/eslint-plugin@8.10.0':
     resolution: {integrity: sha512-phuB3hoP7FFKbRXxjl+DRlQDuJqhpOnm5MmtROXyWi3uS/Xg2ZXqiQfcG2BJHiN4QKyzdOJi3NEn/qTnjUlkmQ==}
@@ -2257,6 +2272,9 @@ packages:
   koa-unless@1.0.7:
     resolution: {integrity: sha512-NKiz+nk4KxSJFskiJMuJvxeA41Lcnx3d8Zy+8QETgifm4ab4aOeGD3RgR6bIz0FGNWwo3Fz0DtnK77mEIqHWxA==}
 
+  koa-websocket@7.0.0:
+    resolution: {integrity: sha512-MsHUFKqA4+j+0dpPKWtsvZfnpQ1NcgF+AaTZQZ4B3Xj/cWK31qqmKx9HnA5Gw1LV2aIDzqwy0IDBsZYRurTUAg==}
+
   koa2-cors@2.0.6:
     resolution: {integrity: sha512-JRCcSM4lamM+8kvKGDKlesYk2ASrmSTczDtGUnIadqMgnHU4Ct5Gw7Bxt3w3m6d6dy3WN0PU4oMP43HbddDEWg==}
     engines: {node: '>= 7.6.0'}
@@ -3585,6 +3603,18 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
+  ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xml-name-validator@4.0.0:
     resolution: {integrity: sha512-ICP2e+jsHvAj2E2lIHxa5tjXRlKDJo4IdvPvCXbXQGdzSfmSpNVyIKMvoZHjDY9DP0zV17iI85o90vRFXNccRw==}
     engines: {node: '>=12'}
@@ -4172,6 +4202,12 @@ snapshots:
       '@types/koa': 2.15.0
       '@types/koa-send': 4.1.6
 
+  '@types/koa-websocket@5.0.10':
+    dependencies:
+      '@types/koa': 2.15.0
+      '@types/koa-compose': 3.2.8
+      '@types/ws': 8.5.13
+
   '@types/koa2-cors@2.0.5':
     dependencies:
       '@types/koa': 2.15.0
@@ -4242,6 +4278,10 @@ snapshots:
   '@types/unist@3.0.3': {}
 
   '@types/validator@13.12.2': {}
+
+  '@types/ws@8.5.13':
+    dependencies:
+      '@types/node': 20.16.13
 
   '@typescript-eslint/eslint-plugin@8.10.0(@typescript-eslint/parser@8.10.0(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3))(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3)':
     dependencies:
@@ -5972,6 +6012,17 @@ snapshots:
 
   koa-unless@1.0.7: {}
 
+  koa-websocket@7.0.0:
+    dependencies:
+      co: 4.6.0
+      debug: 4.3.7
+      koa-compose: 4.1.0
+      ws: 8.18.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   koa2-cors@2.0.6: {}
 
   koa2-swagger-ui@5.10.0(@types/koa@2.15.0):
@@ -7421,6 +7472,8 @@ snapshots:
       strip-ansi: 7.1.0
 
   wrappy@1.0.2: {}
+
+  ws@8.18.0: {}
 
   xml-name-validator@4.0.0: {}
 

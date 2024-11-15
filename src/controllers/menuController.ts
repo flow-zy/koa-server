@@ -9,7 +9,7 @@ import { logger } from '../config/log4js'
 
 export default class MenuController {
 	@request('get', '/menu/list')
-	@tags(['Menu'])
+	@tags(['菜单管理'])
 	@summary('获取菜单列表')
 	@query({
 		pagesize: { type: 'number', required: true, description: '每页条数' },
@@ -30,7 +30,7 @@ export default class MenuController {
 	}
 
 	@request('get', '/menu/all')
-	@tags(['Menu'])
+	@tags(['菜单管理'])
 	@summary('获取所有菜单')
 	static async getAllMenu(ctx: Context) {
 		try {
@@ -45,7 +45,7 @@ export default class MenuController {
 	}
 
 	@request('post', '/menu/add')
-	@tags(['Menu'])
+	@tags(['菜单管理'])
 	@summary('添加菜单')
 	@body({
 		name: { type: 'string', required: true, description: '菜单名称' },
@@ -66,7 +66,7 @@ export default class MenuController {
 	}
 
 	@request('put', '/menu/update/{id}')
-	@tags(['Menu'])
+	@tags(['菜单管理'])
 	@summary('修改菜单')
 	static async updateMenu(ctx: Context) {
 		try {
@@ -84,7 +84,7 @@ export default class MenuController {
 	}
 
 	@request('delete', '/menu/delete/{id}')
-	@tags(['Menu'])
+	@tags(['菜单管理'])
 	@summary('删除菜单')
 	static async deleteMenu(ctx: Context) {
 		try {
@@ -102,7 +102,7 @@ export default class MenuController {
 	}
 
 	@request('put', '/menu/status/{id}')
-	@tags(['Menu'])
+	@tags(['菜单管理'])
 	@summary('切换菜单状态')
 	static async changeStatus(ctx: Context) {
 		try {

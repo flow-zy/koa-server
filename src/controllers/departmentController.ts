@@ -16,10 +16,22 @@ export default class DepartmentController {
 	@tags(['部门管理'])
 	@summary('获取部门列表')
 	@query({
-		pagenumber: { type: 'number', required: false, default: 1 },
-		pagesize: { type: 'number', required: false, default: 10 },
-		keyword: { type: 'string', required: false },
-		status: { type: 'number', required: false }
+		pagenumber: {
+			type: 'number',
+			required: false,
+			default: 1,
+			description: '分页'
+		},
+		pagesize: {
+			type: 'number',
+			required: false,
+			default: 10,
+			description: '每页条数'
+		},
+		keyword: { type: 'string', required: false, description: '关键词' },
+		status: { type: 'number', required: false, description: '状态' },
+		startTime: { type: 'string', required: false, description: '开始时间' },
+		endTime: { type: 'string', required: false, descriptin: '结束时间' }
 	})
 	static async getList(ctx: Context) {
 		try {

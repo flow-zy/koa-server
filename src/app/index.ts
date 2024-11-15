@@ -3,8 +3,6 @@ import path from 'node:path'
 import Koa from 'koa'
 import { koaBody } from 'koa-body'
 import cors from 'koa2-cors' // 跨域处理
-// import parameter from 'koa-parameter';
-// import koaStatic from 'koa-static';
 import jwt from 'koa-jwt'
 // @ts-ignore
 import parameter from 'koa-parameter'
@@ -30,6 +28,8 @@ import { db } from '../db/mysql'
 
 import errHandler from '../middleware/errHandler'
 import { loggerMiddleware } from '../middleware/loggerMiddleware'
+import { initWebSocket } from '../websocket'
+import { notificationService } from '../services/notificationService'
 
 async function start() {
 	initApp()
@@ -113,9 +113,18 @@ async function start() {
 			method: ctx.method
 		})
 	})
-	app.listen(processEnv.APP_PORT, () => {
+
+	// 初始化 WebSocket
+	const wsApp = initWebSocket(app)
+
+	// 启动定时任务检查过期通知
+	setInterval(() => {
+		notificationService.checkOverdueNotifications()
+	}, 60000)
+
+	wsApp.listen(processEnv.APP_PORT, () => {
 		console.log(
-			`服务已经启动, 环境:${processEnv.NODE_ENV}，端口号:http://localhost:${processEnv.APP_PORT}`
+			`服务已经启动, 端口号:http://localhost:${processEnv.APP_PORT}`
 		)
 	})
 

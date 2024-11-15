@@ -14,35 +14,102 @@ import { UserMessage } from '../enums'
 import { BusinessError } from '../utils/businessError'
 import { DepartmentModel } from '../model'
 import { DateUtil } from '../utils/dateUtil'
+import { logger } from '../config/log4js'
 class UserService {
+	/**
+	 * 获取用户信息
+	 */
 	async getUserInfo(id: number) {
 		try {
-			const user = await User.findOne({
+			const user = await UserModel.findOne({
 				where: { id },
 				include: [
 					{
 						model: RoleModel,
-						as: 'roles',
+						attributes: ['id', 'name', 'code'],
 						through: { attributes: [] },
-						attributes: ['id', 'name']
+						include: [
+							{
+								model: MenuModel,
+								through: { attributes: [] },
+								attributes: [
+									'id',
+									'name',
+									'path',
+									'component',
+									'icon',
+									'parentId',
+									'sort'
+								]
+							},
+							{
+								model: PermissionModel,
+								through: { attributes: [] },
+								attributes: ['id', 'name', 'code']
+							}
+						]
+					},
+					{
+						model: DepartmentModel,
+						attributes: ['id', 'name', 'code']
 					}
 				],
-				attributes: {
-					exclude: ['password', 'deleted_at'] // 排除密码字段
-				}
+				attributes: { exclude: ['password'] }
 			})
-			console.log(user, 'user')
-			if (!user) return null
 
-			// 使用 DataUtil 处理数据
-			const userData = DataUtil.toJSON(user)
+			if (!user) {
+				throw new BusinessError('用户不存在')
+			}
+
+			// 处理返回数据结构
+			const userData = user.toJSON()
+			const roles = userData.roles || []
+
+			// 提取菜单列表
+			const menuSet = new Set()
+			const menuList = roles.reduce((acc: any[], role: any) => {
+				role.menus?.forEach((menu: any) => {
+					if (!menuSet.has(menu.id)) {
+						menuSet.add(menu.id)
+						acc.push(menu)
+					}
+				})
+				return acc
+			}, [])
+
+			// 提取权限列表
+			const permissionSet = new Set()
+			const permissionList = roles.reduce((acc: any[], role: any) => {
+				role.permissions?.forEach((permission: any) => {
+					if (!permissionSet.has(permission.id)) {
+						permissionSet.add(permission.id)
+						acc.push(permission)
+					}
+				})
+				return acc
+			}, [])
 
 			return {
-				...userData,
-				roles: userData.roles || []
+				userInfo: {
+					id: userData.id,
+					username: userData.username,
+					nickname: userData.nickname,
+					email: userData.email,
+					phone: userData.phone,
+					avatar: userData.avatar,
+					status: userData.status,
+					department: userData.department
+				},
+				role_list: roles.map((role: any) => ({
+					id: role.id,
+					name: role.name,
+					code: role.code
+				})),
+				permission_list: permissionList,
+				menu_list: this.buildMenuTree(menuList)
 			}
 		} catch (error) {
-			console.error('获取用户信息错误:', error)
+			logger.error('获取用户信息失败:', error)
 			throw error
 		}
 	}
@@ -73,10 +140,10 @@ class UserService {
 		const userInfo = await userModel.findOne({
 			where: { id },
 			attributes: {
-				exclude: ['password', 'deleted_at']
+				exclude: ['deleted_at']
 			}
 		})
-		return userInfo?.dataValues
+		return userInfo
 	}
 	// 修改用户状态
 	updStatus = async (id: number) => {
@@ -172,11 +239,10 @@ class UserService {
 		}
 	}
 	updUserInfo = async (params: User & { roles: number[] }) => {
-		const { id, roles, avatar, ...option } = params
+		const { id, avatar, ...option } = params
 		const user = await userModel.findByPk(id)
 		if (!user) return false
 		// @ts-ignore
-		await user.addRoles(roles)
 		return await user.update(
 			{ ...option, avatar: avatar.toString() },
 			{ where: { id } }
@@ -200,7 +266,6 @@ class UserService {
 	}
 	// 修改密码
 	updPassword = async (params: { id: number; password: string }) => {
-		params.password = encrypt(params.password)
 		return await userModel.update(
 			{ password: params.password },
 			{ where: { id: params.id } }
@@ -224,6 +289,19 @@ class UserService {
 			console.log(error)
 			return false
 		}
+	}
+
+	/**
+	 * 构建菜单树
+	 */
+	private buildMenuTree(menus: any[], parentId: number | null = null): any[] {
+		return menus
+			.filter((menu) => menu.parentId === parentId)
+			.map((menu) => ({
+				...menu,
+				children: this.buildMenuTree(menus, menu.id)
+			}))
+			.sort((a, b) => a.sort - b.sort)
 	}
 }
 export default new UserService()

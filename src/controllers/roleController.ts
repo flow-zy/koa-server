@@ -1,5 +1,12 @@
 import { Context } from 'koa'
-import { tags, summary, request, query, body } from 'koa-swagger-decorator'
+import {
+	tags,
+	summary,
+	request,
+	query,
+	body,
+	path
+} from 'koa-swagger-decorator'
 import roleService from '../services/roleService'
 import { RoleMessage } from '../enums/role'
 import RoleModel from '../model/roleModel'
@@ -44,6 +51,45 @@ export default class RoleController {
 	@request('post', '/role/add')
 	@tags(['角色管理'])
 	@summary(['添加角色'])
+	@body({
+		name: {
+			type: 'string',
+			required: true,
+			description: '角色名称'
+		},
+		code: {
+			type: 'string',
+			required: true,
+			description: '角色编码'
+		},
+		sort: {
+			type: 'number',
+			required: false,
+			default: 1,
+			description: '排序'
+		},
+		status: {
+			type: 'number',
+			required: false,
+			default: 1,
+			description: '状态：0-禁用 1-启用'
+		},
+		remark: {
+			type: 'string',
+			required: false,
+			description: '备注'
+		},
+		menus: {
+			type: 'array',
+			required: false,
+			description: '菜单列表'
+		},
+		permissions: {
+			type: 'array',
+			required: false,
+			description: '权限列表'
+		}
+	})
 	static async addRole(ctx: Context) {
 		try {
 			const params = ctx.request.body as RoleModel
@@ -74,6 +120,51 @@ export default class RoleController {
 	@request('put', '/role/update/{id}')
 	@tags(['角色管理'])
 	@summary(['修改角色'])
+	@path({
+		id: {
+			type: 'number',
+			required: true
+		}
+	})
+	@body({
+		name: {
+			type: 'string',
+			required: true,
+			description: '角色名称'
+		},
+		code: {
+			type: 'string',
+			required: true,
+			description: '角色编码'
+		},
+		sort: {
+			type: 'number',
+			required: false,
+			default: 1,
+			description: '排序'
+		},
+		status: {
+			type: 'number',
+			required: false,
+			default: 1,
+			description: '状态：0-禁用 1-启用'
+		},
+		remark: {
+			type: 'string',
+			required: false,
+			description: '备注'
+		},
+		menus: {
+			type: 'array',
+			required: false,
+			description: '菜单列表'
+		},
+		permissions: {
+			type: 'array',
+			required: false,
+			description: '权限列表'
+		}
+	})
 	static async updateRole(ctx: Context) {
 		try {
 			const id = parseInt(ctx.params.id)
@@ -92,6 +183,13 @@ export default class RoleController {
 	@request('put', '/role/status/{id}')
 	@tags(['角色管理'])
 	@summary('切换角色状态')
+	@path({
+		id: {
+			type: 'number',
+			required: true,
+			description: '角色id'
+		}
+	})
 	static async changeStatus(ctx: Context) {
 		try {
 			const id = parseInt(ctx.params.id)
@@ -108,6 +206,12 @@ export default class RoleController {
 	@request('get', '/role/detail/{id}')
 	@tags(['角色管理'])
 	@summary(['获取角色详情'])
+	@path({
+		id: {
+			type: 'number',
+			required: true
+		}
+	})
 	static async getRoleDetail(ctx: Context) {
 		try {
 			const { id } = ctx.params

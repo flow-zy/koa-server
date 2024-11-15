@@ -108,6 +108,14 @@ class AuthService {
 	async create(userData: UserModel): Promise<UserModel> {
 		return UserModel.create(userData)
 	}
+	// 根据邮箱查找用户
+	async findByEmail(email: string): Promise<UserModel | null> {
+		return UserModel.findOne({ where: { email } })
+	}
+	// 根据手机号查找用户
+	async findByPhone(phone: string): Promise<UserModel | null> {
+		return UserModel.findOne({ where: { phone } })
+	}
 }
 
 export default new AuthService()

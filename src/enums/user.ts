@@ -57,6 +57,7 @@ export enum UserMessage {
 	UPDATE_PASSWORD_ERROR = '修改密码失败',
 	OLD_PASSWORD_ERROR = '原密码错误',
 	PASSWORD_NOT_MATCH = '两次输入的密码不一致',
+	NEW_PASSWORD_NOT_MATCH = '新密码与旧密码不能相同',
 	EMAIL_FORMAT_ERROR = '邮箱格式错误',
 	PHONE_FORMAT_ERROR = '手机号格式错误',
 	AVATAR_UPLOAD_ERROR = '头像上传失败',

@@ -11,6 +11,7 @@ import {
 	Order
 } from 'sequelize'
 import { DataUtil } from '../utils/dataUtil'
+import { logger } from '../config/log4js'
 
 export interface QueryParams {
 	pagenumber?: number
@@ -246,5 +247,20 @@ export class BaseDao {
 
 		const result = await model.findByPk(id, options)
 		return result ? DataUtil.toJSON(result) : null
+	}
+
+	/**
+	 * 统计记录数
+	 */
+	static async count<T extends Model>(
+		model: ModelStatic<T>,
+		options?: FindOptions
+	): Promise<number> {
+		try {
+			return await model.count(options)
+		} catch (error) {
+			logger.error('统计记录数失败:', error)
+			throw error
+		}
 	}
 }

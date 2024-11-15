@@ -1,6 +1,5 @@
 import { DepartmentModel, RoleModel, UserModel } from '../model'
 import { logger } from '../config/log4js'
-import bcrypt from 'bcryptjs'
 import { CryptoUtil } from '../utils/cryptoUtil'
 
 export class InitService {
@@ -22,36 +21,40 @@ export class InitService {
 				{
 					name: '技术部',
 					code: 'TECH',
-					parentid: 1, // 总公司下的技术部
+					parentid: 1,
 					sort: 1,
 					status: 1
 				},
 				{
 					name: '人事部',
 					code: 'HR',
-					parentid: 1, // 总公司下的人事部
+					parentid: 1,
 					sort: 2,
 					status: 1
 				},
 				{
 					name: '财务部',
 					code: 'FIN',
-					parentid: 1, // 总公司下的财务部
+					parentid: 1,
 					sort: 3,
 					status: 1
 				}
 			]
 
+			const createdDepts = []
 			for (const dept of departments) {
-				await DepartmentModel.findOrCreate({
+				const [created] = await DepartmentModel.findOrCreate({
 					where: { code: dept.code },
 					defaults: dept
 				})
+				createdDepts.push(created)
 			}
 
 			logger.info('部门数据初始化完成')
+			return createdDepts
 		} catch (error) {
 			logger.error('部门数据初始化失败:', error)
+			throw error
 		}
 	}
 
@@ -109,6 +112,14 @@ export class InitService {
 	 */
 	async initUsers() {
 		try {
+			// 获取部门
+			const techDept = await DepartmentModel.findOne({
+				where: { code: 'TECH' }
+			})
+			const hrDept = await DepartmentModel.findOne({
+				where: { code: 'HR' }
+			})
+
 			// 创建超级管理员
 			const superAdmin = {
 				username: 'super',
@@ -117,7 +128,8 @@ export class InitService {
 				email: 'super@example.com',
 				phone: '13800138000',
 				status: 1,
-				avatar: 'https://avatars.githubusercontent.com/u/1?v=4'
+				avatar: 'https://avatars.githubusercontent.com/u/1?v=4',
+				department_id: techDept?.id // 分配到技术部
 			}
 
 			// 创建管理员
@@ -128,22 +140,22 @@ export class InitService {
 				email: 'admin@example.com',
 				phone: '13800138001',
 				status: 1,
-				avatar: 'https://avatars.githubusercontent.com/u/2?v=4'
+				avatar: 'https://avatars.githubusercontent.com/u/2?v=4',
+				department_id: hrDept?.id // 分配到人事部
 			}
 
-			// 加密密码
 			superAdmin.password = CryptoUtil.aesEncrypt(this.DEFAULT_PASSWORD)
 			admin.password = CryptoUtil.aesEncrypt(this.DEFAULT_PASSWORD)
 
 			// 创建或查找用户
 			const [superUser] = await UserModel.findOrCreate({
 				where: { username: superAdmin.username },
-				defaults: superAdmin as UserModel
+				defaults: superAdmin as any
 			})
 
 			const [adminUser] = await UserModel.findOrCreate({
 				where: { username: admin.username },
-				defaults: admin as UserModel
+				defaults: admin as any
 			})
 
 			// 查找角色
@@ -164,10 +176,19 @@ export class InitService {
 				await adminUser.$set('roles', [adminRole.id])
 			}
 
+			// 如果用户已存在，更新部门信息
+			if (techDept && superUser) {
+				await superUser.update({ departmentId: techDept.id })
+			}
+
+			if (hrDept && adminUser) {
+				await adminUser.update({ departmentId: hrDept.id })
+			}
+
 			logger.info('用户数据初始化完成')
 			logger.info(`初始账号：
-			超级管理员 - username: super, password: ${this.DEFAULT_PASSWORD}
-			管理员 - username: admin, password: ${this.DEFAULT_PASSWORD}
+				超级管理员 - username: super, password: ${this.DEFAULT_PASSWORD}, department: ${techDept?.name}
+				管理员 - username: admin, password: ${this.DEFAULT_PASSWORD}, department: ${hrDept?.name}
 			`)
 		} catch (error) {
 			logger.error('用户数据初始化失败:', error)
@@ -180,12 +201,12 @@ export class InitService {
 	 */
 	async initAll() {
 		try {
-			// 先初始化角色
-			await this.initRoles()
-			// 再初始化用户
-			await this.initUsers()
-			// 最后初始化部门
+			// 先初始化部门
 			await this.initDepartments()
+			// 再初始化角色
+			await this.initRoles()
+			// 最后初始化用户
+			await this.initUsers()
 
 			logger.info('所有数据初始化完成')
 		} catch (error) {

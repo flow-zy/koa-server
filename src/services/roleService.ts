@@ -4,6 +4,8 @@ import { ParamsType } from '../types'
 import { getLimitAndOffset } from '../utils/util'
 import RolePermissionModel from '../model/rolePermissionModel'
 import PermissionModel from '../model/permissionModel'
+import { DataUtil } from '../utils/dataUtil'
+import MenuModel from '../model/menuModel'
 
 class RoleService {
 	getRoleList = async (params: ParamsType<RoleModel>) => {
@@ -39,20 +41,22 @@ class RoleService {
 				exclude: ['deleted_at', 'updated_at']
 			}
 		})
+
 		return {
 			total: count,
 			pagesize: params.pagesize,
 			pagenumber: params.pagenumber,
-			list: rows
+			list: DataUtil.toJSON(rows)
 		}
 	}
 	getAllRole = async () => {
-		return await RoleModel.findAll({
+		const rows = await RoleModel.findAll({
 			order: [['sort', 'DESC']],
 			attributes: {
 				exclude: ['deleted_at', 'updated_at']
 			}
 		})
+		return DataUtil.toJSON(rows)
 	}
 	addRole = async (params: Partial<RoleModel>) => {
 		const existRole = await RoleModel.findOne({
@@ -170,18 +174,17 @@ class RoleService {
 						as: 'permissions',
 						through: { attributes: [] },
 						attributes: ['id', 'name', 'code', 'description']
+					},
+					{
+						model: MenuModel,
+						as: 'menus',
+						through: { attributes: [] },
+						attributes: ['id', 'name', 'code', 'remark']
 					}
 				],
-				attributes: [
-					'id',
-					'name',
-					'nickname',
-					'status',
-					'sort',
-					'description',
-					'created_at',
-					'updated_at'
-				]
+				attributes: {
+					exclude: ['deleted_ad']
+				}
 			})
 
 			if (!role) return null

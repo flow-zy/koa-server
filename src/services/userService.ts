@@ -4,6 +4,8 @@ import { BusinessError } from '../utils/businessError'
 import { DateUtil } from '../utils/dateUtil'
 import { BaseDao } from '../dao/baseDao'
 import { UserMessage } from '../enums/user'
+import { logger } from '../config/log4js'
+
 export class UserService {
 	/**
 	 * 获取用户列表
@@ -158,6 +160,43 @@ export class UserService {
 				}
 			]
 		})
+	}
+
+	/**
+	 * 更新用户状态
+	 */
+	async updateStatus(id: string) {
+		try {
+			const user = await UserModel.findByPk(id)
+			if (!user) {
+				throw new BusinessError('用户不存在')
+			}
+
+			// 不允许修改超级管理员状态
+			const superRole = await RoleModel.findOne({
+				where: { code: 'SUPER_ADMIN' }
+			})
+
+			const userRoles = await user.$get('roles')
+			if (userRoles.some((role) => role.id === superRole?.id)) {
+				throw new BusinessError('不能修改超级管理员状态')
+			}
+
+			// 切换状态
+			const newStatus = user.status === 1 ? 0 : 1
+			await user.update({ status: newStatus })
+
+			return {
+				id: user.id,
+				status: newStatus
+			}
+		} catch (error) {
+			logger.error('更新用户状态失败:', error)
+			if (error instanceof BusinessError) {
+				throw error
+			}
+			throw new BusinessError('更新用户状态失败')
+		}
 	}
 }
 

@@ -48,7 +48,10 @@ export default class AdminController {
 			)
 
 			// 查找用户
-			const user = await userService.findByUsername(username)
+			const user =
+				(await userService.findByUsername(username)) ||
+				(await userService.findByEmail(username)) ||
+				(await userService.findByPhone(username))
 			if (!user) {
 				ErrorUtil.throw(AuthMessage.USER_NOT_FOUND)
 			}
@@ -109,7 +112,16 @@ export default class AdminController {
 		email: { type: 'string', required: false, description: '邮箱' },
 		phone: { type: 'string', required: false, description: '手机号' },
 		nickname: { type: 'string', required: false, description: '昵称' },
-		roles: { type: 'array', required: false, description: '角色' }
+		roles: { type: 'array', required: false, description: '角色' },
+		departmentId: {
+			type: 'number',
+			required: true,
+			description: '部门ID'
+		},
+		avatar: { type: 'string', required: false, description: '头像' },
+		remark: { type: 'string', required: false, description: '备注' },
+		sort: { type: 'number', required: false, description: '排序' },
+		status: { type: 'number', required: false, description: '状态' }
 	})
 	static async register(ctx: Context) {
 		const params = ctx.request.body as RegisterParams

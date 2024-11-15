@@ -4,6 +4,7 @@ import UserModel from '../model/userModel'
 import { Op } from 'sequelize'
 import { BusinessError } from '../utils/businessError'
 import { UserMessage } from '../enums/user'
+import { DateUtil } from '../utils/dateUtil'
 
 export class DepartmentService {
 	/**
@@ -13,9 +14,11 @@ export class DepartmentService {
 		params: QueryParams & {
 			keyword?: string
 			status?: number
+			startTime?: string
+			endTime?: string
 		}
 	) {
-		const { keyword, status, ...restParams } = params
+		const { keyword, status, startTime, endTime, ...restParams } = params
 
 		const queryParams: QueryParams = {
 			...restParams,
@@ -26,13 +29,26 @@ export class DepartmentService {
 						{ code: { [Op.like]: `%${keyword}%` } }
 					]
 				}),
-				...(status !== undefined && { status })
+				...(status !== undefined && { status }),
+				...(startTime &&
+					endTime && {
+						created_at: {
+							[Op.between]: [
+								DateUtil.getStartOfDay(new Date(startTime)),
+								DateUtil.getEndOfDay(new Date(endTime))
+							]
+						}
+					})
 			},
 			include: [
 				{
 					association: 'users',
 					attributes: ['id', 'username', 'nickname']
 				}
+			],
+			order: [
+				['sort', 'ASC'],
+				['created_at', 'DESC']
 			]
 		}
 

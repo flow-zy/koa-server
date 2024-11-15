@@ -1,5 +1,5 @@
 {
-  "name": "@bin/flockmaster-blogs-service",
+  "name": "rac-service",
   "version": "1.0.0",
   "description": "",
   "_moduleAliases": {
@@ -45,6 +45,7 @@
     "koa-router-ts": "^3.0.0",
     "koa-static": "^5.0.0",
     "koa-swagger-decorator": "^1.8.7",
+    "koa-websocket": "^7.0.0",
     "koa2-cors": "^2.0.6",
     "koa2-swagger-ui": "^5.8.0",
     "log4js": "^6.9.1",
@@ -58,7 +59,8 @@
     "reflect-metadata": "^0.1.13",
     "sequelize": "^6.31.1",
     "sequelize-typescript": "^2.1.5",
-    "uid": "^2.0.2"
+    "uid": "^2.0.2",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
@@ -71,11 +73,13 @@
     "@types/koa-logger": "^3.1.5",
     "@types/koa-router": "^7.4.4",
     "@types/koa-static": "^4.0.4",
+    "@types/koa-websocket": "^5.0.10",
     "@types/koa2-cors": "^2.0.2",
     "@types/markdown-it": "^12.2.3",
     "@types/node": "^20.2.5",
     "@types/node-schedule": "^2.1.0",
     "@types/validator": "^13.7.17",
+    "@types/ws": "^8.5.13",
     "commitizen": "^4.3.0",
     "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.3.0",

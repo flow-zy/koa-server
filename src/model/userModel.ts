@@ -66,6 +66,11 @@ class UserModel extends Model<UserModel> {
 	@Column(DataType.INTEGER)
 	declare sort: number
 
+	@Comment('备注')
+	@Column(DataType.STRING)
+	declare remark: string
+
+	@Comment('部门ID')
 	@ForeignKey(() => DepartmentModel)
 	@Column({
 		type: DataType.BIGINT,
@@ -79,7 +84,6 @@ class UserModel extends Model<UserModel> {
 
 	// 密码验证方法
 	async validatePassword(inputPassword: string): Promise<boolean> {
-		console.log(this.password, 'this.password', inputPassword)
 		// 直接比较加密后的密码
 		return this.password === inputPassword
 	}
