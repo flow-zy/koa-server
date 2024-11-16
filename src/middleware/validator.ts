@@ -19,9 +19,9 @@ export async function validatorId(ctx: Context, next: Next) {
 export async function validatorPage(ctx: Context, next: Next) {
   try {
     ctx.verifyParams({
-      pageNumber: 'number',
-      pageSize: 'number',
-    })
+		pagenumber: 'number',
+		pagesize: 'number'
+	})
   }
   catch (error) {
     return ctx.app.emit('error', ERROR.validatorPageError, ctx, error)

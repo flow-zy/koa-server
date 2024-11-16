@@ -39,6 +39,10 @@ export default class DepartmentModel extends Model {
 	@Column(DataType.INTEGER)
 	declare sort: number
 
+	@Comment('备注')
+	@Column(DataType.STRING)
+	declare remark: string
+
 	@Comment('状态：0-禁用 1-启用')
 	@Default(1)
 	@Column(DataType.INTEGER)

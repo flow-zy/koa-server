@@ -8,7 +8,8 @@ import { logger } from '../config/log4js'
 import { UserMessage } from '../enums'
 import { CryptoUtil } from '../utils/cryptoUtil'
 import UserModel from '../model/userModel'
-
+import { LogService as logService } from '../services/logService'
+import { createLogger } from '../utils/logger'
 // 登录参数验证
 interface LoginParams {
 	username: string
@@ -33,69 +34,84 @@ export default class AdminController {
 		password: { type: 'string', required: true, description: '密码' }
 	})
 	static async login(ctx: Context) {
+		const startTime = Date.now()
 		const { username, password } = ctx.request
 			.query as unknown as LoginParams
+		const loggers = createLogger(ctx)
 
-		try {
-			// 参数验证
-			ErrorUtil.assertParam(
-				!!username?.trim(),
-				AuthMessage.USERNAME_REQUIRED
-			)
-			ErrorUtil.assertParam(
-				!!password?.trim(),
-				AuthMessage.PASSWORD_REQUIRED
-			)
+			try {
+				// 参数验证
+				ErrorUtil.assertParam(
+					!!username?.trim(),
+					AuthMessage.USERNAME_REQUIRED
+				)
+				ErrorUtil.assertParam(
+					!!password?.trim(),
+					AuthMessage.PASSWORD_REQUIRED
+				)
 
-			// 查找用户
-			const user =
-				(await userService.findByUsername(username)) ||
-				(await userService.findByEmail(username)) ||
-				(await userService.findByPhone(username))
-			if (!user) {
-				ErrorUtil.throw(AuthMessage.USER_NOT_FOUND)
+				// 查找用户
+				const user =
+					(await userService.findByUsername(username)) ||
+					(await userService.findByEmail(username)) ||
+					(await userService.findByPhone(username))
+				if (!user) {
+					ErrorUtil.throw(AuthMessage.USER_NOT_FOUND)
+				}
+
+				// 验证密码 - 使用解密后的密码进行验证
+				const isValid = await user?.validatePassword(password)
+				if (!isValid) {
+					ErrorUtil.throw(AuthMessage.PASSWORD_ERROR)
+				}
+
+				// 生成 token
+				const token = generateToken(
+					{
+						payload: {
+							ip: ctx.ip,
+							userId: user.id,
+							username: user.username
+						}
+					},
+					defaultOptions
+				)
+
+				const userInfo = await userService.userLogin(user.username)
+				const result = {
+					token: `Bearer ${token}`,
+					userInfo
+				}
+
+				logger.info('管理员登录成功', {
+					username,
+					ip: ctx.ip,
+					userAgent: ctx.get('user-agent')
+				})
+				const responseTime = Date.now() - startTime
+				logService.writeLog({
+					...loggers,
+					responseTime,
+					status: 1,
+					content: '登录成功'
+				})
+				return ctx.success(result, AuthMessage.LOGIN_SUCCESS)
+			} catch (err) {
+				const error = err as any
+				logger.warn('管理员登录失败', {
+					username,
+					ip: ctx.ip,
+					error: error.message
+				})
+				const responseTime = Date.now() - startTime
+				logService.writeLog({
+					...loggers,
+					responseTime,
+					status: 2,
+					content: error.message
+				})
+				throw error
 			}
-
-			// 验证密码 - 使用解密后的密码进行验证
-			const isValid = await user?.validatePassword(password)
-			if (!isValid) {
-				ErrorUtil.throw(AuthMessage.PASSWORD_ERROR)
-			}
-
-			// 生成 token
-			const token = generateToken(
-				{
-					payload: {
-						ip: ctx.ip,
-						userId: user.id,
-						username: user.username
-					}
-				},
-				defaultOptions
-			)
-
-			const userInfo = await userService.userLogin(user.username)
-			const result = {
-				token: `Bearer ${token}`,
-				userInfo
-			}
-
-			logger.info('管理员登录成功', {
-				username,
-				ip: ctx.ip,
-				userAgent: ctx.get('user-agent')
-			})
-
-			return ctx.success(result, AuthMessage.LOGIN_SUCCESS)
-		} catch (err) {
-			const error = err as any
-			logger.warn('管理员登录失败', {
-				username,
-				ip: ctx.ip,
-				error: error.message
-			})
-			throw error
-		}
 	}
 
 	@request('post', '/register')
@@ -125,6 +141,8 @@ export default class AdminController {
 	})
 	static async register(ctx: Context) {
 		const params = ctx.request.body as RegisterParams
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 
 		try {
 			// 基本参数验证
@@ -194,6 +212,13 @@ export default class AdminController {
 				ip: ctx.ip
 			})
 
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '注册成功'
+			})
 			return ctx.success(null, AuthMessage.REGISTER_SUCCESS)
 		} catch (err) {
 			const error = err as any
@@ -204,6 +229,13 @@ export default class AdminController {
 				error: error.message
 			})
 
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content: error.message
+			})
 			throw error
 		}
 	}
@@ -212,6 +244,8 @@ export default class AdminController {
 	@tags(['管理员'])
 	@summary('获取管理员信息')
 	static async getInfo(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { userId } = ctx.state.user
 			const user = await userService.findById(userId)
@@ -230,12 +264,27 @@ export default class AdminController {
 				roles: user.roles
 			}
 
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '获取管理员信息成功'
+			})
 			return ctx.success(userInfo)
 		} catch (err) {
 			const error = err as any
 			logger.error('获取管理员信息失败', {
 				userId: ctx.state.user?.id,
 				error: error.message
+			})
+
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content: error.message
 			})
 			throw error
 		}
@@ -245,14 +294,32 @@ export default class AdminController {
 	@tags(['管理员'])
 	@summary('退出登录')
 	static async logout(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const token = ctx.headers.authorization?.split(' ')[1]
 			if (token) {
 				// 将token加入黑名单
 			}
-			ctx.success(null, UserMessage.LOGOUT_SUCCESS)
-		} catch (error) {
-			ctx.error(UserMessage.LOGOUT_ERROR)
+
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '退出登录成功'
+			})
+			return ctx.success(null, UserMessage.LOGOUT_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content: error.message
+			})
+			return ctx.error(UserMessage.LOGOUT_ERROR)
 		}
 	}
 }

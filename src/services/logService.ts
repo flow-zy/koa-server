@@ -63,4 +63,8 @@ export class LogService {
 	static async getDetail(id: number) {
 		return await Log.findByPk(id)
 	}
+	// 写入日志
+	static async writeLog(logData: Partial<Log>) {
+		return await Log.create(logData)
+	}
 }

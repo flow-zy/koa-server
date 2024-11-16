@@ -266,6 +266,36 @@ export class DepartmentService {
 			order: [['created_at', 'DESC']]
 		})
 	}
+
+	/**
+	 * 往部门添加用户
+	 */
+	async addUsers(id: number, ids: number[]) {
+		// 检查用户是否存在该部门
+		const users = await BaseDao.findAll(UserModel, {
+			where: { id: { [Op.in]: ids }, department_id: id }
+		})
+		if (users && users.list.length > 0) {
+			throw new BusinessError(UserMessage.USER_ALREADY_EXISTS)
+		}
+		const { list } = await BaseDao.findAll(UserModel, {
+			where: { id: { [Op.in]: ids } }
+		})
+		// 添加用户
+		await BaseDao.update(
+			DepartmentModel,
+			{
+				users: list
+			},
+			{ id }
+		)
+		// 更新用户部门
+		return await BaseDao.update(
+			UserModel,
+			{ departmentId: id },
+			{ id: { [Op.in]: ids } }
+		)
+	}
 }
 
 export const departmentService = new DepartmentService()

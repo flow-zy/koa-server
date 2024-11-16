@@ -82,5 +82,11 @@ export enum UserMessage {
 	CANNOT_SET_SELF_AS_PARENT = '不能将自己设为父级部门',
 	CANNOT_SET_CHILD_AS_PARENT = '不能将子部门设为父级部门',
 	DEPARTMENT_HAS_CHILDREN = '该部门下有子部门，不能删除',
-	DEPARTMENT_HAS_USERS = '该部门下有用户，不能删除'
+	DEPARTMENT_HAS_USERS = '该部门下有用户，不能删除',
+	GET_DEPARTMENT_LIST_SUCCESS = '获取部门列表成功',
+	GET_DEPARTMENT_DETAIL_SUCCESS = '获取部门详情成功',
+	GET_DEPARTMENT_USERS_SUCCESS = '获取部门用户成功',
+	ADD_DEPARTMENT_USER_SUCCESS = '往部门添加用户成功',
+	ADD_DEPARTMENT_USER_ERROR = '往部门添加用户失败',
+	USER_ALREADY_EXISTS = '用户已存在该部门'
 }

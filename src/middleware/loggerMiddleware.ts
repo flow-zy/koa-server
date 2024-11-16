@@ -2,7 +2,6 @@ import { Context, Next } from 'koa'
 import { DateUtil } from '../utils/dateUtil'
 import { logger } from '../config/log4js'
 import Log from '../model/log'
-import { ApiActions } from '../enums/apiPaths'
 export const loggerMiddleware = async (ctx: Context, next: Next) => {
 	const startTime = Date.now()
 	const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -54,14 +53,6 @@ export const loggerMiddleware = async (ctx: Context, next: Next) => {
 		}
 
 		logger.info('API Response:', responseLog)
-		await Log.create({
-			username: ctx.state.user?.username,
-			ip: ctx.ip,
-			method: ctx.method,
-			url: ctx.url,
-			content: ApiActions[apipath as keyof typeof ApiActions],
-			status: 1 // 成功
-		})
 	} catch (err) {
 		const error = err as Error
 		// 记录错误信息
@@ -79,14 +70,7 @@ export const loggerMiddleware = async (ctx: Context, next: Next) => {
 		}
 
 		logger.error('API Error:', errorLog)
-		await Log.create({
-			username: ctx.state.user?.username,
-			ip: ctx.ip,
-			method: ctx.method,
-			url: ctx.url,
-			content: ApiActions[apipath as keyof typeof ApiActions],
-			status: 2 // 失败
-		})
+
 		throw error
 	}
 }

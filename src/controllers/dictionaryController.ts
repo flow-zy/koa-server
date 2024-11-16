@@ -10,7 +10,9 @@ import {
 import { dictionaryService } from '../services/dictionaryService'
 import { logger } from '../config/log4js'
 import { DictionaryMessage } from '../enums/dictionary'
-
+import { createLogger } from '../utils/logger'
+import { LogService as logService } from '../services/logService'
+import { BusinessError } from '../utils/businessError'
 export default class DictionaryController {
 	@request('get', '/dictionary/list')
 	@tags(['字典管理'])
@@ -24,12 +26,31 @@ export default class DictionaryController {
 		endTime: { type: 'string', required: false }
 	})
 	static async getList(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const result = await dictionaryService.getList(ctx.query)
-			ctx.success(result)
-		} catch (error) {
-			logger.error('获取字典列表失败:', error)
-			ctx.error('获取字典列表失败')
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '获取字典列表成功'
+			})
+			return ctx.success(result)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_LIST_ERROR
+			})
+			return ctx.error('获取字典列表失败')
 		}
 	}
 
@@ -37,12 +58,34 @@ export default class DictionaryController {
 	@tags(['字典管理'])
 	@summary('获取所有字典')
 	static async getAll(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const result = await dictionaryService.getAll()
-			ctx.success(result)
-		} catch (error) {
-			logger.error('获取所有字典失败:', error)
-			ctx.error('获取所有字典失败')
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '获取所有字典成功'
+			})
+			return ctx.success(result)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_ALL_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error('获取所有字典失败')
 		}
 	}
 
@@ -57,12 +100,34 @@ export default class DictionaryController {
 		remark: { type: 'string', required: false }
 	})
 	static async create(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const result = await dictionaryService.create(ctx.request.body)
-			ctx.success(result, DictionaryMessage.DICT_ADD_SUCCESS)
-		} catch (error) {
-			logger.error('添加字典失败:', error)
-			ctx.error(
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '添加字典成功'
+			})
+			return ctx.success(result, DictionaryMessage.DICT_ADD_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_OPERATION_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(
 				error instanceof Error
 					? error.message
 					: DictionaryMessage.DICT_OPERATION_ERROR
@@ -77,15 +142,30 @@ export default class DictionaryController {
 		id: { type: 'number', required: true }
 	})
 	static async update(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { id } = ctx.params
 			const result = await dictionaryService.update(
 				Number(id),
 				ctx.request.body
 			)
-			ctx.success(result, DictionaryMessage.DICT_UPDATE_SUCCESS)
-		} catch (error) {
-			logger.error('更新字典失败:', error)
+			return ctx.success(result, DictionaryMessage.DICT_UPDATE_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_OPERATION_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
 			ctx.error(
 				error instanceof Error
 					? error.message
@@ -101,13 +181,35 @@ export default class DictionaryController {
 		id: { type: 'number', required: true }
 	})
 	static async delete(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { id } = ctx.params
 			await dictionaryService.delete(Number(id))
-			ctx.success(null, DictionaryMessage.DICT_DELETE_SUCCESS)
-		} catch (error) {
-			logger.error('删除字典失败:', error)
-			ctx.error(
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '删除字典成功'
+			})
+			return ctx.success(null, DictionaryMessage.DICT_DELETE_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_OPERATION_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(
 				error instanceof Error
 					? error.message
 					: DictionaryMessage.DICT_OPERATION_ERROR
@@ -122,13 +224,32 @@ export default class DictionaryController {
 		id: { type: 'number', required: true }
 	})
 	static async getDetail(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { id } = ctx.params
 			const result = await dictionaryService.getDetail(Number(id))
-			ctx.success(result)
-		} catch (error) {
-			logger.error('获取字典详情失败:', error)
-			ctx.error(
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '获取字典详情成功'
+			})
+			return ctx.success(result)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_OPERATION_ERROR
+			})
+			return ctx.error(
 				error instanceof Error
 					? error.message
 					: DictionaryMessage.DICT_OPERATION_ERROR
@@ -143,13 +264,32 @@ export default class DictionaryController {
 		id: { type: 'number', required: true }
 	})
 	static async updateStatus(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { id } = ctx.params
 			await dictionaryService.updateStatus(Number(id))
-			ctx.success(null, DictionaryMessage.DICT_STATUS_SUCCESS)
-		} catch (error) {
-			logger.error('更新字典状态失败:', error)
-			ctx.error(
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '更新字典状态成功'
+			})
+			return ctx.success(null, DictionaryMessage.DICT_STATUS_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_OPERATION_ERROR
+			})
+			return ctx.error(
 				error instanceof Error
 					? error.message
 					: DictionaryMessage.DICT_OPERATION_ERROR
@@ -164,12 +304,31 @@ export default class DictionaryController {
 		code: { type: 'string', required: true }
 	})
 	static async getByCode(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { code } = ctx.params
 			const result = await dictionaryService.getByCode(code)
-			ctx.success(result, DictionaryMessage.DICT_GET_SUCCESS)
-		} catch (error) {
-			logger.error('获取字典失败:', error)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '根据编码获取字典成功'
+			})
+			return ctx.success(result, DictionaryMessage.DICT_GET_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: DictionaryMessage.DICT_OPERATION_ERROR
+			})
 			ctx.error(
 				error instanceof Error
 					? error.message

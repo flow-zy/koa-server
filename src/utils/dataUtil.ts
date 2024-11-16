@@ -10,6 +10,8 @@ const DATE_FIELDS = [
 	'start_time',
 	'end_time'
 ]
+// 需要排除的字段
+const EXCLUDE_FIELDS = ['password', 'deleted_at']
 /**
  * 数据处理工具类
  */
@@ -138,6 +140,11 @@ export class DataUtil {
 		const result: Record<string, any> = {}
 
 		for (const [key, value] of Object.entries(obj)) {
+			if (EXCLUDE_FIELDS.includes(key)) {
+				// 排除敏感字段
+				delete result[key]
+				continue
+			}
 			if (DATE_FIELDS.includes(key) && value) {
 				// 处理日期字段
 				result[key] = DateUtil.formatDateTime(value)

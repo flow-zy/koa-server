@@ -35,5 +35,6 @@ export enum DictionaryMessage {
 	DICT_NOT_FOUND = '字典不存在',
 	DICT_OPERATION_ERROR = '字典操作失败',
 	DICT_CODE_EXISTS = '字典编码已存在',
-	DICT_GET_SUCCESS = '获取字典成功'
+	DICT_GET_SUCCESS = '获取字典成功',
+	DICT_ALL_ERROR = '获取所有字典失败'
 }

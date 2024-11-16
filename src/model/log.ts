@@ -43,6 +43,10 @@ export default class Log extends Model {
 	@Column(DataType.STRING)
 	declare content: string
 
+	@Comment('响应时间')
+	@Column(DataType.INTEGER)
+	declare responseTime: number
+
 	@Comment('操作状态 1:成功 2:失败')
 	@Default(1)
 	@Column(DataType.INTEGER)

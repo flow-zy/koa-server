@@ -18,6 +18,8 @@ import { logger } from '../config/log4js'
 import RoleUserModel from '../model/roleUserModel'
 import { CryptoUtil } from '../utils/cryptoUtil'
 import { BusinessError } from '../middleware/errHandler'
+import { createLogger } from '../utils/logger'
+import { LogService as logService } from '../services/logService'
 export default class UserController {
 	@request('get', '/user/info/{id}')
 	@summary(['用户信息'])
@@ -26,12 +28,30 @@ export default class UserController {
 	})
 	@tags(['用户管理'])
 	static async getInfo(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { id } = ctx.params
 			const result = await userService.getUserInfo(Number(id))
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '获取用户信息成功'
+			})
 			return ctx.success(result, UserMessage.USER_INFO_SUCCESS)
 		} catch (error) {
-			logger.error('获取用户信息失败:', error)
+			const responseTime = Date.now() - startTime
+				logService.writeLog({
+					...loggers,
+					responseTime,
+					status: 2,
+					content:
+						error instanceof BusinessError
+							? error.message
+							: UserMessage.USER_INFO_ERROR
+				})
 			if (error instanceof BusinessError) {
 				return ctx.error(error.message)
 			}
@@ -47,13 +67,34 @@ export default class UserController {
 	})
 	static async updateStatus(ctx: Context) {
 		const params = ctx.params as unknown as UserModel
-		console.log(params)
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const res = await userService.updStatus(params.id)
-			if (!res) return ctx.error(UserMessage.USER_STATUS_ERROR)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '更新用户状态成功'
+			})
 			return ctx.success(null, UserMessage.USER_STATUS_SUCCESS)
-		} catch (error) {
-			throw ctx.error(HttpError.HTTP)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_STATUS_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_STATUS_ERROR)
 		}
 	}
 
@@ -70,13 +111,36 @@ export default class UserController {
 		endTime: { type: 'date', require: false, description: '结束时间' }
 	})
 	static async getAllUser(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		const params = ctx.request.query as unknown as any
 		try {
 			const res = await userService.getList(params)
-			if (res) return ctx.success(res, UserMessage.USER_LIST_SUCCESS)
-			return ctx.error(UserMessage.USER_LIST_ERROR)
-		} catch (error) {
-			throw ctx.error(HttpError.HTTP)
+			if (!res) return ctx.error(UserMessage.USER_LIST_ERROR)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '获取用户列表成功'
+			})
+			return ctx.success(res, UserMessage.USER_LIST_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_LIST_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+				return ctx.error(UserMessage.USER_LIST_ERROR)
 		}
 	}
 
@@ -102,6 +166,8 @@ export default class UserController {
 		status: { type: 'number', required: false, description: '状态' }
 	})
 	static async updUserInfo(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		const params = ctx.request.body as UserModel & { roles: number[] }
 		const existUser = await userService.findByUsername(params.username)
 		if (!existUser) {
@@ -111,9 +177,30 @@ export default class UserController {
 		try {
 			const res = await userService.updUserInfo(params)
 			if (!res) return ctx.error(UserMessage.USER_UPD_INFO_ERROR)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '修改用户信息成功'
+			})
 			return ctx.success(null, UserMessage.USER_UPD_INFO_SUCCESS)
-		} catch (error) {
-			throw ctx.error(HttpError.HTTP)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_UPD_INFO_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_UPD_INFO_ERROR)
 		}
 	}
 
@@ -125,6 +212,8 @@ export default class UserController {
 		ids: { type: 'array<number>', required: true, description: '用户ID' }
 	})
 	static async batchDelete(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		const params = ctx.params as unknown as {
 			ids: string
 		}
@@ -132,9 +221,30 @@ export default class UserController {
 			const ids = params.ids.split(',').map(Number)
 			const res = await userService.batchDelete(ids)
 			if (!res) return ctx.error(UserMessage.USER_BATCH_USER_ERROR)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '批量删除用户成功'
+			})
 			return ctx.success(null, UserMessage.USER_BATCH_USER_SUCCESS)
-		} catch (error) {
-			throw ctx.error(HttpError.HTTP)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_BATCH_USER_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_BATCH_USER_ERROR)
 		}
 	}
 
@@ -156,14 +266,37 @@ export default class UserController {
 		const params = ctx.request.body as unknown as {
 			roles: RoleModel['id'][]
 		}
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 
 		try {
 			const id = ctx.params.id
 			const res = await userService.updUserRole(id, params.roles)
-			if (res) return ctx.error(UserMessage.USER_ROLE_ERROR)
+			if (!res) return ctx.error(UserMessage.USER_ROLE_ERROR)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '设置用户角色成功'
+			})
 			return ctx.success(null, UserMessage.USER_ROLE_SUCCESS)
-		} catch (error) {
-			throw ctx.error(HttpError.HTTP)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_ROLE_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_ROLE_ERROR)
 		}
 	}
 
@@ -182,6 +315,8 @@ export default class UserController {
 	static async updPassword(ctx: Context) {
 		const { id } = ctx.params
 		const { password = '', confirmPassword = '' } = ctx.request.body
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			// 校验新密码与旧密码是否一致
 			const user = await userService.findById(id)
@@ -192,9 +327,30 @@ export default class UserController {
 				return ctx.error(UserMessage.PASSWORD_NOT_MATCH)
 			const res = await userService.updPassword({ id, password })
 			if (!res) return ctx.error(UserMessage.USER_PASSWORD_ERROR)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '重置用户密码成功'
+			})
 			return ctx.success(null, UserMessage.USER_PASSWORD_SUCCESS)
-		} catch (error) {
-			throw ctx.error(HttpError.HTTP)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_PASSWORD_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_PASSWORD_ERROR)
 		}
 	}
 
@@ -210,15 +366,38 @@ export default class UserController {
 	@summary(['修改用户头像'])
 	static async updAvatar(ctx: Context) {
 		const { id } = ctx.params
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const res = await userService.updAvatar(
 				id,
 				ctx.request.body?.avatar
 			)
 			if (!res) return ctx.error(UserMessage.USER_AVATAR_ERROR)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '修改用户头像成功'
+			})
 			return ctx.success(null, UserMessage.USER_AVATAR_SUCCESS)
 		} catch (err) {
-			throw ctx.error(HttpError.HTTP)
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_AVATAR_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_AVATAR_ERROR)
 		}
 	}
 	// 添加用户
@@ -243,6 +422,8 @@ export default class UserController {
 	})
 	static async addUser(ctx: Context) {
 		const requestBody = ctx.request.body
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		// 参数验证
 		if (!requestBody.username?.trim()) {
 			return ctx.error(UserMessage.USERNAME_REQUIRED)
@@ -267,11 +448,30 @@ export default class UserController {
 				ip: ctx.ip,
 				userAgent: ctx.get('user-agent')
 			})
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '添加用户成功'
+			})
 			return ctx.success(null, UserMessage.USER_ADD_SUCCESS)
 		} catch (err) {
 			const error = err as any
-			logger.error(error.message)
-			throw ctx.send(HttpError.HTTP, 500)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_ADD_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(UserMessage.USER_ADD_ERROR)
 		}
 	}
 
@@ -279,6 +479,8 @@ export default class UserController {
 	@tags(['个人中心'])
 	@summary('获取个人信息')
 	static async getProfile(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { userId } = ctx.state.user
 			const user = await userService.findById(userId)
@@ -297,10 +499,29 @@ export default class UserController {
 				department: user.department,
 				roles: user.roles
 			}
-
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '获取个人信息成功'
+			})
 			return ctx.success(result, UserMessage.USER_INFO_SUCCESS)
-		} catch (error) {
-			logger.error('获取个人信息失败:', error)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_INFO_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
 			return ctx.error(UserMessage.USER_INFO_ERROR)
 		}
 	}
@@ -318,6 +539,8 @@ export default class UserController {
 		username: { type: 'string', required: false }
 	})
 	static async updateProfile(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { userId } = ctx.state.user
 			const updateData = ctx.request.body
@@ -343,10 +566,29 @@ export default class UserController {
 			if (!result) {
 				return ctx.error(UserMessage.USER_UPD_INFO_ERROR)
 			}
-
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '更新个人信息成功'
+			})
 			return ctx.success(null, UserMessage.USER_UPD_INFO_SUCCESS)
-		} catch (error) {
-			logger.error('更新个人信息失败:', error)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_UPD_INFO_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
 			return ctx.error(UserMessage.USER_UPD_INFO_ERROR)
 		}
 	}
@@ -360,6 +602,8 @@ export default class UserController {
 		confirmPassword: { type: 'string', required: true }
 	})
 	static async updatePassword(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { userId } = ctx.state.user
 			const { oldPassword, newPassword, confirmPassword } =
@@ -392,7 +636,7 @@ export default class UserController {
 			if (!user) {
 				return ctx.error(UserMessage.USER_NOT_EXIST)
 			}
-			const isValidOldPassword = oldPassword ===user.password
+			const isValidOldPassword = oldPassword === user.password
 			if (!isValidOldPassword) {
 				return ctx.error(UserMessage.OLD_PASSWORD_ERROR)
 			}
@@ -405,10 +649,29 @@ export default class UserController {
 			if (!result) {
 				return ctx.error(UserMessage.USER_PASSWORD_ERROR)
 			}
-
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '修改密码成功'
+			})
 			return ctx.success(null, UserMessage.USER_PASSWORD_SUCCESS)
-		} catch (error) {
-			logger.error('修改密码失败:', error)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_PASSWORD_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
 			return ctx.error(UserMessage.USER_PASSWORD_ERROR)
 		}
 	}
@@ -420,6 +683,8 @@ export default class UserController {
 		avatar: { type: 'string', required: true, description: '头像' }
 	})
 	static async updateAvatar(ctx: Context) {
+		const startTime = Date.now()
+		const loggers = createLogger(ctx)
 		try {
 			const { userId } = ctx.state.user
 			const file = ctx.request.body?.avatar
@@ -433,12 +698,29 @@ export default class UserController {
 			if (!result) {
 				return ctx.error(UserMessage.USER_AVATAR_ERROR)
 			}
-
-			return ctx.success(null,
-				UserMessage.USER_AVATAR_SUCCESS
-			)
-		} catch (error) {
-			logger.error('更新头像失败:', error)
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 1,
+				content: '更新头像成功'
+			})
+			return ctx.success(null, UserMessage.USER_AVATAR_SUCCESS)
+		} catch (err) {
+			const error = err as any
+			const responseTime = Date.now() - startTime
+			logService.writeLog({
+				...loggers,
+				responseTime,
+				status: 2,
+				content:
+					error instanceof BusinessError
+						? error.message
+						: UserMessage.USER_AVATAR_ERROR
+			})
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
 			return ctx.error(UserMessage.USER_AVATAR_ERROR)
 		}
 	}
