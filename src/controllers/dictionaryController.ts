@@ -37,7 +37,7 @@ export default class DictionaryController {
 				status: 1,
 				content: '获取字典列表成功'
 			})
-			return ctx.success(result)
+			return ctx.success(result, DictionaryMessage.DICT_LIST_SUCCESS)
 		} catch (err) {
 			const error = err as any
 			const responseTime = Date.now() - startTime
@@ -50,7 +50,10 @@ export default class DictionaryController {
 						? error.message
 						: DictionaryMessage.DICT_LIST_ERROR
 			})
-			return ctx.error('获取字典列表失败')
+			if (error instanceof BusinessError) {
+				return ctx.error(error.message)
+			}
+			return ctx.error(DictionaryMessage.DICT_LIST_ERROR)
 		}
 	}
 
@@ -69,7 +72,7 @@ export default class DictionaryController {
 				status: 1,
 				content: '获取所有字典成功'
 			})
-			return ctx.success(result)
+			return ctx.success(result, DictionaryMessage.DICT_ALL_SUCCESS)
 		} catch (err) {
 			const error = err as any
 			const responseTime = Date.now() - startTime
@@ -85,7 +88,7 @@ export default class DictionaryController {
 			if (error instanceof BusinessError) {
 				return ctx.error(error.message)
 			}
-			return ctx.error('获取所有字典失败')
+			return ctx.error(DictionaryMessage.DICT_ALL_ERROR)
 		}
 	}
 
@@ -97,7 +100,9 @@ export default class DictionaryController {
 		dictcode: { type: 'string', required: true },
 		sort: { type: 'number', required: false },
 		status: { type: 'number', required: false },
-		remark: { type: 'string', required: false }
+		remark: { type: 'string', required: false },
+		parentid: { type: 'number', required: false },
+		type: { type: 'number', required: false }
 	})
 	static async create(ctx: Context) {
 		const startTime = Date.now()
@@ -111,7 +116,7 @@ export default class DictionaryController {
 				status: 1,
 				content: '添加字典成功'
 			})
-			return ctx.success(result, DictionaryMessage.DICT_ADD_SUCCESS)
+			return ctx.success(null, DictionaryMessage.DICT_ADD_SUCCESS)
 		} catch (err) {
 			const error = err as any
 			const responseTime = Date.now() - startTime
@@ -141,6 +146,14 @@ export default class DictionaryController {
 	@path({
 		id: { type: 'number', required: true }
 	})
+	@body({
+		dictname: { type: 'string', required: true },
+		dictcode: { type: 'string', required: true },
+		sort: { type: 'number', required: false },
+		status: { type: 'number', required: false },
+		remark: { type: 'string', required: false },
+		type: { type: 'number', required: false }
+	})
 	static async update(ctx: Context) {
 		const startTime = Date.now()
 		const loggers = createLogger(ctx)
@@ -150,7 +163,7 @@ export default class DictionaryController {
 				Number(id),
 				ctx.request.body
 			)
-			return ctx.success(result, DictionaryMessage.DICT_UPDATE_SUCCESS)
+			return ctx.success(null, DictionaryMessage.DICT_UPDATE_SUCCESS)
 		} catch (err) {
 			const error = err as any
 			const responseTime = Date.now() - startTime
@@ -297,18 +310,18 @@ export default class DictionaryController {
 		}
 	}
 
-	@request('get', '/dictionary/code/{code}')
+	@request('get', '/dictionary/code/{dictcode}')
 	@tags(['字典管理'])
 	@summary('根据编码获取字典')
 	@path({
-		code: { type: 'string', required: true }
+		dictcode: { type: 'string', required: true }
 	})
 	static async getByCode(ctx: Context) {
 		const startTime = Date.now()
 		const loggers = createLogger(ctx)
 		try {
-			const { code } = ctx.params
-			const result = await dictionaryService.getByCode(code)
+			const { dictcode } = ctx.params
+			const result = await dictionaryService.getByCode(dictcode)
 			const responseTime = Date.now() - startTime
 			logService.writeLog({
 				...loggers,

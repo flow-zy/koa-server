@@ -186,7 +186,7 @@ export class DashboardService {
 		const departmentStats = await UserModel.findAll({
 			attributes: [
 				'department_id',
-				[sequelize.fn('COUNT', sequelize.col('id')), 'count']
+				[sequelize.fn('COUNT', sequelize.col('UserModel.id')), 'count']
 			],
 			include: [
 				{
@@ -201,7 +201,7 @@ export class DashboardService {
 		const statusStats = await UserModel.findAll({
 			attributes: [
 				'status',
-				[sequelize.fn('COUNT', sequelize.col('id')), 'count']
+				[sequelize.fn('COUNT', sequelize.col('UserModel.id')), 'count']
 			],
 			group: ['status']
 		})

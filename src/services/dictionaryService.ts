@@ -224,9 +224,9 @@ export class DictionaryService {
 	/**
 	 * 根据编码获取字典
 	 */
-	async getByCode(code: string) {
+	async getByCode(dictcode: string) {
 		return await BaseDao.findOne(DictionaryModel, {
-			where: { dictcode: code, status: 1 },
+			where: { dictcode: dictcode, status: 1 },
 			order: [['sort', 'ASC']]
 		})
 	}

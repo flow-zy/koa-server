@@ -2,6 +2,7 @@ export enum DictionaryMessage {
 	// 列表相关
 	DICT_LIST_SUCCESS = '获取字典列表成功',
 	DICT_LIST_ERROR = '获取字典列表失败',
+	DICT_ALL_SUCCESS = '获取所有字典成功',
 
 	// 添加相关
 	DICT_ADD_SUCCESS = '添加字典成功',
