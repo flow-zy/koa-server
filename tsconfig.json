@@ -13,10 +13,7 @@
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 		"alwaysStrict": false,
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["src/*"]
-		}
+		"baseUrl": "."
 	},
 	"include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js"],
 	"exclude": ["node_modules", "dist", "public"],

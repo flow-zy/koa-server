@@ -1,15 +1,14 @@
 import { BaseDao, QueryParams } from '../dao/baseDao'
 import FileModel from '../model/fileModel'
-import { Op } from 'sequelize'
 import { BusinessError } from '../utils/businessError'
-import { DateUtil } from '../utils/dateUtil'
+import { logger } from '../config/log4js'
+import path from 'path'
+import fs from 'fs'
 import { FileMessage } from '../enums/file'
-import { createWriteStream, unlink } from 'fs'
+import { Op } from 'sequelize'
+import { DateUtil } from '../utils/dateUtil'
+import { unlinkSync } from 'fs'
 import { join } from 'path'
-import { promisify } from 'util'
-import { uid } from 'uid'
-
-const unlinkAsync = promisify(unlink)
 
 export class FileService {
 	/**
@@ -66,41 +65,59 @@ export class FileService {
 	/**
 	 * 上传文件
 	 */
-	async upload(file: any, userId: number, username: string) {
-		const { originalname, mimetype, size } = file
+	async upload(fileInfo: {
+		originalname: string
+		filename: string
+		mimetype: string
+		size: number
+		filepath: string
+		uploader_id?: number
+		uploader?: string
+	}) {
+		try {
+			// 获取文件扩展名
+			const ext = path.extname(fileInfo.originalname).toLowerCase()
 
-		// 生成唯一文件名
-		const ext = originalname.split('.').pop()
-		const filename = `${uid()}.${ext}`
+			// 检查文件类型
+			const category = this.getFileCategory(fileInfo.mimetype)
+			//
+			// 构建存储路径
+			const uploadDir = path.resolve(
+				__dirname,
+				'../static/uploads',
+				fileInfo.mimetype.split('/')[1]
+			)
+			if (!fs.existsSync(uploadDir)) {
+				fs.mkdirSync(uploadDir, { recursive: true })
+			}
 
-		// 根据文件类型确定分类
-		const category = this.getFileCategory(mimetype)
+			// 生成新的文件名
+			const newFilename = `${Date.now()}${ext}`
+			const destPath = path.join(uploadDir, newFilename)
 
-		// 确定存储路径
-		const uploadDir = join(__dirname, '../../uploads', category.toString())
-		const filepath = join(uploadDir, filename)
+			// 移动文件
+			fs.copyFileSync(fileInfo.filepath, destPath)
+			fs.unlinkSync(fileInfo.filepath)
+			// 保存文件信息到数据库
+			const fileData = {
+				filename: newFilename,
+				original_name: fileInfo.originalname,
+				filepath: `/uploads/${fileInfo.mimetype.split('/')[1]}/${newFilename}`,
+				mimetype: fileInfo.mimetype,
+				size: fileInfo.size,
+				category,
+				storage: 1, // 本地存储
+				uploader_id: fileInfo.uploader_id,
+				uploader: fileInfo.uploader,
+				status: 1
+			}
 
-		// 写入文件
-		await new Promise((resolve, reject) => {
-			const writeStream = createWriteStream(filepath)
-			writeStream.write(file.buffer)
-			writeStream.end()
-			writeStream.on('finish', resolve)
-			writeStream.on('error', reject)
-		})
-
-		// 保存文件信息
-		return await BaseDao.create(FileModel, {
-			filename,
-			original_name: originalname,
-			filepath: `/uploads/${category}/${filename}`,
-			mimetype,
-			size,
-			category,
-			storage: 1, // 本地存储
-			uploader_id: userId,
-			uploader: username
-		})
+			const file = await BaseDao.create(FileModel, fileData)
+			return file
+		} catch (error) {
+			logger.error('文件上传失败:', error)
+			throw new BusinessError('文件上传失败')
+		}
 	}
 
 	/**
@@ -111,10 +128,10 @@ export class FileService {
 		if (!file) {
 			throw new BusinessError(FileMessage.NOT_FOUND)
 		}
-
 		// 删除物理文件
 		try {
-			await unlinkAsync(join(__dirname, '../..', file.filepath))
+			await unlinkSync(join(__dirname, '../static', file.filepath))
+			await BaseDao.delete(FileModel, { id })
 		} catch (error) {
 			console.error('删除文件失败:', error)
 			throw new BusinessError(FileMessage.DELETE_ERROR)
@@ -149,7 +166,7 @@ export class FileService {
 	}
 
 	/**
-	 * 根据MIME类型获取文件分类
+	 * 获取文件分类
 	 */
 	private getFileCategory(mimetype: string): number {
 		if (mimetype.startsWith('image/')) return 1
