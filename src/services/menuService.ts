@@ -3,7 +3,9 @@ import MenuModel from '../model/menuModel'
 import RoleMenuModel from '../model/roleMenuModel'
 import { ParamsType } from '../types'
 import { getLimitAndOffset } from '../utils/util'
-
+import { DateUtil } from '../utils/dateUtil'
+import { BaseDao, QueryParams } from '../dao/baseDao'
+import { BusinessError } from '../utils/businessError'
 interface MenuTree extends MenuModel {
 	children?: MenuTree[]
 }
@@ -32,59 +34,49 @@ class MenuService {
 		return tree
 	}
 
-	getMenuList = async (params: ParamsType<MenuModel>) => {
-		const { pagesize, pagenumber, startTime, endTime, ..._params } = params
-
-		const { limit, offset } = getLimitAndOffset(pagesize, pagenumber)
-		const options: any = { limit, offset }
-
-		const where: any = { ..._params }
-		// 添加时间范围过滤
-		if (startTime && endTime) {
-			where.created_at = {
-				[Op.between]: [new Date(startTime), new Date(endTime)]
-			}
-		} else if (startTime) {
-			where.created_at = {
-				[Op.gte]: new Date(startTime)
-			}
-		} else if (endTime) {
-			where.created_at = {
-				[Op.lte]: new Date(endTime)
-			}
+	getMenuList = async (
+		params: QueryParams & {
+			name?: string
+			startTime?: string
+			endTime?: string
 		}
+	) => {
+		const { name, startTime, endTime, ...restParams } = params
 
-		if (Object.keys(_params).length > 0) options.where = where
-
-		const { count, rows } = await MenuModel.findAndCountAll({
-			...options,
-			order: [['sort', 'DESC']],
-			attributes: {
-				exclude: ['deleted_at', 'updated_at']
-			}
-		})
-
+		const queryParams: QueryParams = {
+			...restParams,
+			where: {
+				name: { [Op.like]: `%${name}%` },
+				...(startTime &&
+					endTime && {
+						created_at: {
+							[Op.between]: [
+								DateUtil.getStartOfDay(new Date(startTime)),
+								DateUtil.getEndOfDay(new Date(endTime))
+							]
+						}
+					})
+			},
+			order: [
+				['sort', 'ASC'],
+				['created_at', 'DESC']
+			]
+		}
+		const result = await BaseDao.findByPage(MenuModel, queryParams)
 		// 将结果转换为树状结构
-		const menuTree = this.buildMenuTree(rows)
+		const menuTree = this.buildMenuTree(result.list)
 
 		return {
-			total: count,
-			pagesize: params.pagesize,
-			pagenumber: params.pagenumber,
+			...result,
 			list: menuTree
 		}
 	}
 
 	getAllMenu = async () => {
-		const menus = await MenuModel.findAll({
-			order: [['sort', 'DESC']],
-			attributes: {
-				exclude: ['deleted_at', 'updated_at']
-			}
+		const result = await BaseDao.findAll(MenuModel, {
+			order: [['sort', 'ASC']]
 		})
-
-		// 返回树状结构
-		return this.buildMenuTree(menus)
+		return result
 	}
 
 	addMenu = async (params: Partial<MenuModel> & { roles?: number[] }) => {
@@ -95,7 +87,7 @@ class MenuService {
 					id: params.parentid
 				}
 			})
-			if (!parentMenu) return false
+			if (!parentMenu) throw new BusinessError('父级菜单不存在')
 		}
 
 		// 检查同级菜单名是否重复

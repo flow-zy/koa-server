@@ -41,7 +41,10 @@ async function start() {
 	const parameterMiddleware = createParameterMiddleware({
 		customFilters: ['_t', 'timestamp', 'debug'],
 		trimStrings: true,
-		removeEmpty: true
+		removeEmpty: true,
+		removeUndefined: true,
+		removeNull: true,
+		numberFields: ['id', 'pagenumber', 'pagesize', 'status']
 	})
 	// 注册全局错误处理中间件（需要放在最前面）
 	app.use(errHandler())
@@ -84,10 +87,9 @@ async function start() {
 	// 		path: white_list
 	// 	})
 	// )
-
+	app.use(auth())
 	// 注册参数处理中间件（要在路由中间件之前）
 	app.use(parameterMiddleware)
-	app.use(auth())
 	app.use(router.routes())
 	app.use(router.allowedMethods())
 

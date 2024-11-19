@@ -1,15 +1,14 @@
 import {
-  AllowNull,
-  AutoIncrement,
-  Column,
-  Comment,
-  DataType,
-  Default,
-  Model,
-  PrimaryKey,
-  Table,
+	AllowNull,
+	AutoIncrement,
+	Column,
+	Comment,
+	DataType,
+	Default,
+	Model,
+	PrimaryKey,
+	Table
 } from 'sequelize-typescript'
-import { logger } from '../config/log4js'
 
 // 菜单模型
 @Table({ tableName: 'menu' })
@@ -50,11 +49,11 @@ export default class MenuModel extends Model {
 	@Column(DataType.INTEGER)
 	declare sort: number
 
-	@Comment('菜单类型')
+	@Comment('菜单类型 1:目录 2:菜单 3:按钮')
 	@Column(DataType.INTEGER)
 	declare type: number
 
-	@Comment('菜单状态')
+	@Comment('菜单状态 1:启用 0:禁用')
 	@Default(1)
 	@Column(DataType.INTEGER)
 	declare status: number
@@ -63,15 +62,15 @@ export default class MenuModel extends Model {
 	@Column(DataType.BIGINT)
 	declare parentid: number
 
-	@Comment('外链')
+	@Comment('是否显示 1:显示 0:隐藏')
 	@Default(0)
 	@Column(DataType.INTEGER)
 	declare allowShow: number
 
-	@Comment('是否启用')
-	@Default(1)
+	@Comment('是否外链 1:是 0:否')
+	@Default(0)
 	@Column(DataType.INTEGER)
-	declare allowUse: number
+	declare isBlank: number
 
 	@Comment('备注')
 	@Column(DataType.STRING(50))

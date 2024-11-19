@@ -59,7 +59,9 @@ export const createParameterMiddleware = (
 						}
 					}
 				})
+
 				ctx.query = filteredQuery
+				ctx.request.query = filteredQuery
 			}
 
 			// 处理 request body
