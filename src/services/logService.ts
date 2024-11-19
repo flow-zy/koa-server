@@ -7,14 +7,15 @@ export class LogService {
 	 * 获取日志列表
 	 */
 	static async getList(params: {
-		page: number
-		pageSize: number
+		pagenumber: number
+		pagesize: number
 		username?: string
 		startTime?: string
 		endTime?: string
 		status?: number
 	}) {
-		const { page, pageSize, username, startTime, endTime, status } = params
+		const { pagenumber, pagesize, username, startTime, endTime, status } =
+			params
 		const where: any = {}
 
 		if (username) {
@@ -45,15 +46,18 @@ export class LogService {
 		const { count, rows } = await Log.findAndCountAll({
 			where,
 			order: [['created_at', 'DESC']],
-			offset: (page - 1) * pageSize,
-			limit: pageSize
+			offset: (pagenumber - 1) * pagesize,
+			limit: pagesize,
+			attributes: {
+				exclude: ['deleted_at']
+			}
 		})
 
 		return {
 			list: rows,
 			total: count,
-			page,
-			pageSize
+			pagenumber,
+			pagesize
 		}
 	}
 

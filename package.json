@@ -24,7 +24,7 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "commit": "git-cz",
+    "commit": "git pull && git add . && git-cz && git push",
     "prod": "pm2 start ecosystem.config.json --env production"
   },
   "dependencies": {
